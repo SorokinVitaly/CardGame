@@ -13,6 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.cardgame.ui.theme.MyApplicationTheme
 
+
+enum class PlayerHandType {
+    IT_ME,
+    ACTIVE,
+    NOT_ACTIVE
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
