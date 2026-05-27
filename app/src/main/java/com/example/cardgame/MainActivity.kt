@@ -10,12 +10,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,30 +45,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
-                    RandomCard()
-
+                    val randomCard = deckPoker.random()
+                    Box(
+                        modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            border = BorderStroke(width = 1.dp, color = Color.Black),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.height(88.dp).width(63.dp)
+                        ) {
+                            Image(imageVector = ImageVector.vectorResource(randomCard.imageId), "")
+                        }
+                    }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun RandomCard() {
-
-    val randomCard = deckPoker.random()
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            border = BorderStroke(width = 1.dp, color = Color.Black),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            shape = RoundedCornerShape(4.dp),
-            modifier = Modifier.height(88.dp).width(63.dp)
-        ) {
-            Image(imageVector = ImageVector.vectorResource(randomCard.imageId), "")
         }
     }
 }
