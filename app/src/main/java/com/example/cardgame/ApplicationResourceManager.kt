@@ -7,5 +7,8 @@ import android.content.Context
 @SuppressLint("StaticFieldLeak")
 object ApplicationResourceManager {
     lateinit var appContext: Context
-    fun init(context: Context) { appContext = context.applicationContext }
+
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
 }
