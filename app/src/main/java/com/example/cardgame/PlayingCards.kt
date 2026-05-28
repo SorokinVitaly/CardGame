@@ -1,12 +1,11 @@
 package com.example.cardgame
 
-import androidx.annotation.DrawableRes
 
 enum class CardSuit {
-    SPADES,
-    CLUBS,
-    DIAMONDS,
-    HEARTS
+    SPADE,
+    CLUB,
+    DIAMOND,
+    HEART
 }
 
 enum class CardRank {
@@ -28,76 +27,92 @@ enum class CardRank {
 
 data class Card(
     val rank: CardRank,
-    val suit: CardSuit,
-    @DrawableRes val imageId: Int = 0
-)
+    val suit: CardSuit = CardSuit.SPADE,
+) {
+    val assetName = createAssetName()
 
-private val jokerCard = Card(CardRank.JOKER, CardSuit.SPADES, R.drawable.joker_3)
+    private fun createAssetName(): String {
+        val prefix ="file:///android_asset/"
+        val postfix = ".svg"
+        if (rank == CardRank.JOKER) {
+            return "${prefix}JOKER-3$postfix"
+        }
+        val rankNumber = rank.ordinal + 2
+        val rankName = when (rank) {
+            CardRank.ACE -> "1"
+            CardRank.JACK, CardRank.QUEEN, CardRank.KING -> "$rankNumber-${rank.name}"
+            else -> "$rankNumber"
+        }
+        return "$prefix${suit.name}-$rankName$postfix"
+    }
+}
+
+private val jokerCard = Card(CardRank.JOKER)
 
 private val standardCards = setOf(
-    Card(CardRank.TWO, CardSuit.SPADES, R.drawable.spade_2),
-    Card(CardRank.THREE, CardSuit.SPADES, R.drawable.spade_3),
-    Card(CardRank.FOUR, CardSuit.SPADES, R.drawable.spade_4),
-    Card(CardRank.FIVE, CardSuit.SPADES, R.drawable.spade_5),
-    Card(CardRank.SIX, CardSuit.SPADES, R.drawable.spade_6),
-    Card(CardRank.SEVEN, CardSuit.SPADES, R.drawable.spade_7),
-    Card(CardRank.EIGHT, CardSuit.SPADES, R.drawable.spade_8),
-    Card(CardRank.NINE, CardSuit.SPADES, R.drawable.spade_9),
-    Card(CardRank.TEN, CardSuit.SPADES, R.drawable.spade_10),
-    Card(CardRank.JACK, CardSuit.SPADES, R.drawable.spade_11_jack),
-    Card(CardRank.QUEEN, CardSuit.SPADES, R.drawable.spade_12_queen),
-    Card(CardRank.KING, CardSuit.SPADES, R.drawable.spade_13_king),
-    Card(CardRank.ACE, CardSuit.SPADES, R.drawable.spade_1),
+    Card(CardRank.TWO, CardSuit.SPADE),
+    Card(CardRank.THREE, CardSuit.SPADE),
+    Card(CardRank.FOUR, CardSuit.SPADE),
+    Card(CardRank.FIVE, CardSuit.SPADE),
+    Card(CardRank.SIX, CardSuit.SPADE),
+    Card(CardRank.SEVEN, CardSuit.SPADE),
+    Card(CardRank.EIGHT, CardSuit.SPADE),
+    Card(CardRank.NINE, CardSuit.SPADE),
+    Card(CardRank.TEN, CardSuit.SPADE),
+    Card(CardRank.JACK, CardSuit.SPADE),
+    Card(CardRank.QUEEN, CardSuit.SPADE),
+    Card(CardRank.KING, CardSuit.SPADE),
+    Card(CardRank.ACE, CardSuit.SPADE),
 
-    Card(CardRank.TWO, CardSuit.CLUBS, R.drawable.club_2),
-    Card(CardRank.THREE, CardSuit.CLUBS, R.drawable.club_3),
-    Card(CardRank.FOUR, CardSuit.CLUBS, R.drawable.club_4),
-    Card(CardRank.FIVE, CardSuit.CLUBS, R.drawable.club_5),
-    Card(CardRank.SIX, CardSuit.CLUBS, R.drawable.club_6),
-    Card(CardRank.SEVEN, CardSuit.CLUBS, R.drawable.club_7),
-    Card(CardRank.EIGHT, CardSuit.CLUBS, R.drawable.club_8),
-    Card(CardRank.NINE, CardSuit.CLUBS, R.drawable.club_9),
-    Card(CardRank.TEN, CardSuit.CLUBS, R.drawable.club_10),
-    Card(CardRank.JACK, CardSuit.CLUBS, R.drawable.club_11_jack),
-    Card(CardRank.QUEEN, CardSuit.CLUBS, R.drawable.club_12_queen),
-    Card(CardRank.KING, CardSuit.CLUBS, R.drawable.club_13_king),
-    Card(CardRank.ACE, CardSuit.CLUBS, R.drawable.club_1),
+    Card(CardRank.TWO, CardSuit.CLUB),
+    Card(CardRank.THREE, CardSuit.CLUB),
+    Card(CardRank.FOUR, CardSuit.CLUB),
+    Card(CardRank.FIVE, CardSuit.CLUB),
+    Card(CardRank.SIX, CardSuit.CLUB),
+    Card(CardRank.SEVEN, CardSuit.CLUB),
+    Card(CardRank.EIGHT, CardSuit.CLUB),
+    Card(CardRank.NINE, CardSuit.CLUB),
+    Card(CardRank.TEN, CardSuit.CLUB),
+    Card(CardRank.JACK, CardSuit.CLUB),
+    Card(CardRank.QUEEN, CardSuit.CLUB),
+    Card(CardRank.KING, CardSuit.CLUB),
+    Card(CardRank.ACE, CardSuit.CLUB),
 
-    Card(CardRank.TWO, CardSuit.DIAMONDS, R.drawable.diamond_2),
-    Card(CardRank.THREE, CardSuit.DIAMONDS, R.drawable.diamond_3),
-    Card(CardRank.FOUR, CardSuit.DIAMONDS, R.drawable.diamond_4),
-    Card(CardRank.FIVE, CardSuit.DIAMONDS, R.drawable.diamond_5),
-    Card(CardRank.SIX, CardSuit.DIAMONDS, R.drawable.diamond_6),
-    Card(CardRank.SEVEN, CardSuit.DIAMONDS, R.drawable.diamond_7),
-    Card(CardRank.EIGHT, CardSuit.DIAMONDS, R.drawable.diamond_8),
-    Card(CardRank.NINE, CardSuit.DIAMONDS, R.drawable.diamond_9),
-    Card(CardRank.TEN, CardSuit.DIAMONDS, R.drawable.diamond_10),
-    Card(CardRank.JACK, CardSuit.DIAMONDS, R.drawable.diamond_11_jack),
-    Card(CardRank.QUEEN, CardSuit.DIAMONDS, R.drawable.diamond_12_queen),
-    Card(CardRank.KING, CardSuit.DIAMONDS, R.drawable.diamond_13_king),
-    Card(CardRank.ACE, CardSuit.DIAMONDS, R.drawable.diamond_1),
+    Card(CardRank.TWO, CardSuit.DIAMOND),
+    Card(CardRank.THREE, CardSuit.DIAMOND),
+    Card(CardRank.FOUR, CardSuit.DIAMOND),
+    Card(CardRank.FIVE, CardSuit.DIAMOND),
+    Card(CardRank.SIX, CardSuit.DIAMOND),
+    Card(CardRank.SEVEN, CardSuit.DIAMOND),
+    Card(CardRank.EIGHT, CardSuit.DIAMOND),
+    Card(CardRank.NINE, CardSuit.DIAMOND),
+    Card(CardRank.TEN, CardSuit.DIAMOND),
+    Card(CardRank.JACK, CardSuit.DIAMOND),
+    Card(CardRank.QUEEN, CardSuit.DIAMOND),
+    Card(CardRank.KING, CardSuit.DIAMOND),
+    Card(CardRank.ACE, CardSuit.DIAMOND),
 
-    Card(CardRank.TWO, CardSuit.HEARTS, R.drawable.heart_2),
-    Card(CardRank.THREE, CardSuit.HEARTS, R.drawable.heart_3),
-    Card(CardRank.FOUR, CardSuit.HEARTS, R.drawable.heart_4),
-    Card(CardRank.FIVE, CardSuit.HEARTS, R.drawable.heart_5),
-    Card(CardRank.SIX, CardSuit.HEARTS, R.drawable.heart_6),
-    Card(CardRank.SEVEN, CardSuit.HEARTS, R.drawable.heart_7),
-    Card(CardRank.EIGHT, CardSuit.HEARTS, R.drawable.heart_8),
-    Card(CardRank.NINE, CardSuit.HEARTS, R.drawable.heart_9),
-    Card(CardRank.TEN, CardSuit.HEARTS, R.drawable.heart_10),
-    Card(CardRank.JACK, CardSuit.HEARTS, R.drawable.heart_11_jack),
-    Card(CardRank.QUEEN, CardSuit.HEARTS, R.drawable.heart_12_queen),
-    Card(CardRank.KING, CardSuit.HEARTS, R.drawable.heart_13_king),
-    Card(CardRank.ACE, CardSuit.HEARTS, R.drawable.heart_1),
+    Card(CardRank.TWO, CardSuit.HEART),
+    Card(CardRank.THREE, CardSuit.HEART),
+    Card(CardRank.FOUR, CardSuit.HEART),
+    Card(CardRank.FIVE, CardSuit.HEART),
+    Card(CardRank.SIX, CardSuit.HEART),
+    Card(CardRank.SEVEN, CardSuit.HEART),
+    Card(CardRank.EIGHT, CardSuit.HEART),
+    Card(CardRank.NINE, CardSuit.HEART),
+    Card(CardRank.TEN, CardSuit.HEART),
+    Card(CardRank.JACK, CardSuit.HEART),
+    Card(CardRank.QUEEN, CardSuit.HEART),
+    Card(CardRank.KING, CardSuit.HEART),
+    Card(CardRank.ACE, CardSuit.HEART),
 ).toList()
 
-val deckBlackJack = standardCards
+val deckBlackJack by lazy { standardCards }
 
-val deckPoker = standardCards
+val deckPoker by lazy { standardCards }
 
-val deckPokerWithJokers = standardCards + jokerCard + jokerCard
+val deckPokerWithJokers by lazy { standardCards + jokerCard + jokerCard }
 
-val deckPreferans = standardCards.filter { it.rank >= CardRank.SEVEN }
+val deckPreferans by lazy { standardCards.filter { it.rank >= CardRank.SEVEN } }
 
-val deckDurak = standardCards.filter { it.rank >= CardRank.SIX }
+val deckDurak by lazy { standardCards.filter { it.rank >= CardRank.SIX } }
