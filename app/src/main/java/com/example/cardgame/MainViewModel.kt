@@ -1,46 +1,29 @@
 package com.example.cardgame
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 
 class MainViewModel(localData: LocalDataRepository = LocalData) : ViewModel() {
-    val player0 = PlayerData(
-        name = localData.player0Name,
-        type = PlayerType.IT_ME,
-        chips = localData.player0Chips
-    )
-    val player1 = PlayerData(
-        name = localData.player1Name,
-        type = isPlayerActive(localData.isPlayer1Active),
-        chips = localData.player1Chips
-    )
-    val player2 = PlayerData(
-        name = localData.player2Name,
-        type = isPlayerActive(localData.isPlayer2Active),
-        chips = localData.player2Chips
-    )
-    val player3 = PlayerData(
-        name = localData.player3Name,
-        type = isPlayerActive(localData.isPlayer3Active),
-        chips = localData.player3Chips
-    )
-
-    private fun isPlayerActive(isActive: Boolean): PlayerType =
-        if (isActive) {
-            PlayerType.ACTIVE
-        } else {
-            PlayerType.NOT_ACTIVE
-        }
-
-    private val _state = MutableStateFlow(ScreenState(
-        listOf(player0, player1, player2, player3)
-    ))
+    private val _state = MutableStateFlow(ScreenState(initPlayers(localData)))
     val state = _state.asStateFlow()
 
-    private val deck: MutableList<Card> = deckPokerWithJokers.toMutableList()
+    private val deck = deckPokerWithJokers.toMutableList().apply { shuffle() }
 
     fun dealingCards() {
-
+        viewModelScope.launch {
+            repeat(5) {
+                repeat(4) { index ->
+                    val card = deck.removeAt(deck.lastIndex)
+                    _state.update { it.updatePlayer(index) { addCard(card) } }
+                    delay(200L)
+                }
+            }
+        }
     }
 }

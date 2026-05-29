@@ -69,3 +69,35 @@ object LocalData : LocalDataRepository {
     const val DEFAULT_PLAYER_3_NAME = "Vanessa May"
     const val DEFAULT_CHIP_NUMBER = 1000
 }
+
+fun initPlayers(localData: LocalDataRepository): List<PlayerData> {
+    fun isPlayerActive(isActive: Boolean): PlayerType =
+        if (isActive) {
+            PlayerType.ACTIVE
+        } else {
+            PlayerType.NOT_ACTIVE
+        }
+
+    val player0 = PlayerData(
+        name = localData.player0Name,
+        type = PlayerType.IT_ME,
+        chips = localData.player0Chips
+    )
+    val player1 = PlayerData(
+        name = localData.player1Name,
+        type = isPlayerActive(localData.isPlayer1Active),
+        chips = localData.player1Chips
+    )
+    val player2 = PlayerData(
+        name = localData.player2Name,
+        type = isPlayerActive(localData.isPlayer2Active),
+        chips = localData.player2Chips
+    )
+    val player3 = PlayerData(
+        name = localData.player3Name,
+        type = isPlayerActive(localData.isPlayer3Active),
+        chips = localData.player3Chips
+    )
+
+    return listOf(player0, player1, player2, player3)
+}
