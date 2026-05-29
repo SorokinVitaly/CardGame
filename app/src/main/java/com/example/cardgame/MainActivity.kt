@@ -7,9 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,15 +20,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
@@ -47,6 +54,9 @@ class App : Application() {
     }
 }
 
+val cardHeight = 88.dp
+val cardWidth = 63.dp
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,25 +66,18 @@ class MainActivity : ComponentActivity() {
                 val viewModel by viewModels<MainViewModel>()
                 val state by viewModel.state.collectAsStateWithLifecycle()
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val randomCard = deckPokerWithJokers.random()
+                Scaffold(
+                    containerColor = Color.Cyan,
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
                     Box(
                         modifier = Modifier.padding(innerPadding).fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Card(
-                            border = BorderStroke(width = 1.dp, color = Color.Black),
-                            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                            shape = RoundedCornerShape(4.dp),
-                            modifier = Modifier.height(88.dp).width(63.dp)
-                        ) {
-                            val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
-                            AsyncImage(
-                                model = randomCard.assetName,
-                                imageLoader = imageLoader,
-                                contentDescription = "Jack of Clubs",
-                            )
-                        }
+                        Player(state.players[0])
+                    }
+                    LaunchedEffect(0) {
+                        viewModel.dealingCards()
                     }
                 }
             }
@@ -82,36 +85,63 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class CardData(val name: String)
+@Composable
+fun Card(
+    card: Card,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        border = BorderStroke(width = 1.dp, color = Color.Black),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        shape = RoundedCornerShape(4.dp),
+        modifier = modifier.height(cardHeight).width(cardWidth)
+    ) {
+        val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
+        AsyncImage(
+            model = card.assetName,
+            imageLoader = imageLoader,
+            contentDescription = "Jack of Clubs",
+        )
+    }
+}
 
 @Composable
 fun Player(
-    name: String,
-    cards: List<CardData>,
-    score: Int,
+    playerData: PlayerData,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.background(Color.Green),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = name,
+            text = playerData.name,
             style = MaterialTheme.typography.titleMedium
         )
 
         Box {
-            cards.forEachIndexed { index, card ->
-                Box(modifier = Modifier.padding(start = (index * 20).dp)) {
-                    //Card(card)
+            if (playerData.cards.isEmpty()) {
+                Spacer(modifier = Modifier.height(cardHeight))
+            } else {
+                playerData.cards.forEachIndexed { index, card ->
+                    Box(modifier = Modifier.padding(start = (index * 20).dp)) {
+                        Card(card)
+                    }
                 }
             }
         }
 
-        Text(
-            text = score.toString(),
-            style = MaterialTheme.typography.headlineSmall
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = ImageVector.vectorResource(R.drawable.poker_chip),
+                tint = Color.Red,
+                contentDescription = "Poker chip"
+            )
+            Text(
+                text = playerData.chips.toString(),
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
     }
 }

@@ -3,7 +3,7 @@ package com.example.cardgame
 import androidx.compose.runtime.Immutable
 
 @Immutable
-data class ScreenState(val players: List<PlayerData>) {
+data class ScreenState(val players: List<PlayerData>, val isDealing: Boolean = false) {
     init {
         if (players.size != 4) {
             throw IllegalStateException("Wrong number of players")

@@ -17,13 +17,21 @@ class MainViewModel(localData: LocalDataRepository = LocalData) : ViewModel() {
 
     fun dealingCards() {
         viewModelScope.launch {
+            _state.update { it.copy(isDealing = true) }
             repeat(5) {
                 repeat(4) { index ->
-                    val card = deck.removeAt(deck.lastIndex)
-                    _state.update { it.updatePlayer(index) { addCard(card) } }
-                    delay(200L)
+                    if (_state.value.players[index].type != PlayerType.NOT_ACTIVE) {
+                        delay(250L)
+                        val card = deck.removeAt(deck.lastIndex)
+                        _state.update { it.updatePlayer(index) { addCard(card) } }
+                    }
                 }
             }
+            delay(500L)
+            _state.update { oldState ->
+                oldState.copy(players = oldState.players.map { it.sortCards() })
+            }
+            _state.update { it.copy(isDealing = false) }
         }
     }
 }
