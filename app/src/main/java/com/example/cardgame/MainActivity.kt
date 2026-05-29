@@ -2,10 +2,10 @@ package com.example.cardgame
 
 import android.app.Application
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,29 +21,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.example.cardgame.ui.theme.MyApplicationTheme
 
-
-enum class PlayerType {
-    IT_ME,
-    ACTIVE,
-    NOT_ACTIVE
-}
-
-data class Player(
-    val name: String,
-    val type: PlayerType,
-    val cards: List<Card> = emptyList(),
-    val chips: Int = 0
-)
 
 class App : Application() {
     val imageLoader by lazy {
@@ -64,10 +53,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
+                val viewModel by viewModels<MainViewModel>()
+                val state by viewModel.state.collectAsStateWithLifecycle()
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val randomCard = deckPokerWithJokers.random()
-                    //val randomCard = deckPokerWithJokers[10]
-                    Log.e(null, randomCard.assetName)
                     Box(
                         modifier = Modifier.padding(innerPadding).fillMaxSize(),
                         contentAlignment = Alignment.Center

@@ -107,12 +107,17 @@ private val standardCards = setOf(
     Card(CardRank.ACE, CardSuit.HEART),
 ).toList()
 
+@Suppress("unused")
 val deckBlackJack by lazy { standardCards }
 
+@Suppress("unused")
 val deckPoker by lazy { standardCards }
 
+@Suppress("unused")
 val deckPokerWithJokers by lazy { standardCards + jokerCard + jokerCard }
 
+@Suppress("unused")
 val deckPreferans by lazy { standardCards.filter { it.rank >= CardRank.SEVEN } }
 
+@Suppress("unused")
 val deckDurak by lazy { standardCards.filter { it.rank >= CardRank.SIX } }
