@@ -20,7 +20,7 @@ class MainViewModel(localData: LocalDataRepository = LocalData) : ViewModel() {
             _state.update { it.copy(isDealing = true) }
             repeat(5) {
                 repeat(4) { index ->
-                    if (_state.value.players[index].type != PlayerType.NOT_ACTIVE) {
+                    if (_state.value.players[index].isActive) {
                         delay(250L)
                         val card = deck.removeAt(deck.lastIndex)
                         _state.update { it.updatePlayer(index) { addCard(card) } }

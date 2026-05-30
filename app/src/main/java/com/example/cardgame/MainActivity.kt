@@ -34,6 +34,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.ConstrainScope
+import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
@@ -54,9 +56,6 @@ class App : Application() {
     }
 }
 
-val cardHeight = 88.dp
-val cardWidth = 63.dp
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,21 +64,34 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 val viewModel by viewModels<MainViewModel>()
                 val state by viewModel.state.collectAsStateWithLifecycle()
-
-                Scaffold(
-                    containerColor = Color.Cyan,
-                    modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
-                    Box(
-                        modifier = Modifier.padding(innerPadding).fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Player(state.players[0])
-                    }
-                    LaunchedEffect(0) {
-                        viewModel.dealingCards()
-                    }
+                MainScreen(state)
+                LaunchedEffect(0) {
+                    viewModel.dealingCards()
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun MainScreen(state: ScreenState) {
+    Scaffold(
+        containerColor = Color.Cyan,
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        ConstraintLayout(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+        ) {
+            state.players.forEachIndexed { i, player ->
+                Player(
+                    playerData = player,
+                    modifier = Modifier.constrainAs(
+                        createRef(),
+                        playerConstraint(i)
+                    )
+                )
             }
         }
     }
@@ -94,13 +106,15 @@ fun Card(
         border = BorderStroke(width = 1.dp, color = Color.Black),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         shape = RoundedCornerShape(4.dp),
-        modifier = modifier.height(cardHeight).width(cardWidth)
+        modifier = modifier
+            .height(cardHeight)
+            .width(cardWidth)
     ) {
         val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
         AsyncImage(
             model = card.assetName,
             imageLoader = imageLoader,
-            contentDescription = "Jack of Clubs",
+            contentDescription = "Card",
         )
     }
 }
@@ -110,14 +124,19 @@ fun Player(
     playerData: PlayerData,
     modifier: Modifier = Modifier
 ) {
+    if (!playerData.isActive) {
+        return
+    }
+
     Column(
-        modifier = modifier.background(Color.Green),
+        modifier = modifier.background(Color.DarkGray),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = playerData.name,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White
         )
 
         Box {
@@ -140,8 +159,34 @@ fun Player(
             )
             Text(
                 text = playerData.chips.toString(),
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White
             )
         }
     }
 }
+
+private fun playerConstraint(index: Int): ConstrainScope.() -> Unit = {
+    when (index) {
+        0 -> {
+            centerHorizontallyTo(parent)
+            bottom.linkTo(parent.bottom, margin = 5.dp)
+        }
+        1 -> {
+            centerVerticallyTo(parent)
+            absoluteLeft.linkTo(parent.absoluteLeft, margin = 5.dp)
+        }
+        2 -> {
+            centerHorizontallyTo(parent)
+            top.linkTo(parent.top, margin = 5.dp)
+        }
+        3 -> {
+            centerVerticallyTo(parent)
+            absoluteRight.linkTo(parent.absoluteRight, margin = 5.dp)
+        }
+        else -> throw IllegalArgumentException("Invalid player index: $index")
+    }
+}
+
+val cardHeight = 88.dp
+val cardWidth = 63.dp
