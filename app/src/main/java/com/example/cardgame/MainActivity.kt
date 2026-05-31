@@ -161,6 +161,12 @@ fun Player(
                 color = Color.White
             )
         }
+
+        Text(
+            text = playerData.footerText,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.LightGray
+        )
     }
 }
 
