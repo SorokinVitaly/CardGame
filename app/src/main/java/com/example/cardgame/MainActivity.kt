@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -130,8 +129,7 @@ fun Player(
 
     Column(
         modifier = modifier.background(Color.DarkGray),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = playerData.name,
@@ -159,7 +157,7 @@ fun Player(
             )
             Text(
                 text = playerData.chips.toString(),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = Color.White
             )
         }

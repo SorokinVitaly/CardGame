@@ -34,4 +34,12 @@ class MainViewModel(localData: LocalDataRepository = LocalData) : ViewModel() {
             _state.update { it.copy(isDealing = false) }
         }
     }
+
+    companion object {
+        const val ANTE_BET = 1
+        const val PRE_DRAW_BET = 1
+        const val PRE_DRAW_RAISE = 1
+        const val POST_DRAW_BET = 2
+        const val POST_DRAW_RAISE = 2
+    }
 }
