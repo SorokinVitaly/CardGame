@@ -29,11 +29,15 @@ data class Card(
     val rank: CardRank,
     val suit: CardSuit = CardSuit.SPADE,
 ) {
-    val assetName = createAssetName()
+    val assetName = createAssetName(false)
+    val backAssetName = createAssetName(true)
 
-    private fun createAssetName(): String {
+    private fun createAssetName(isBack: Boolean): String {
         val prefix ="file:///android_asset/"
         val postfix = ".svg"
+        if (isBack) {
+            return "${prefix}CARD_BACK$postfix"
+        }
         if (rank == CardRank.JOKER) {
             return "${prefix}JOKER-3$postfix"
         }

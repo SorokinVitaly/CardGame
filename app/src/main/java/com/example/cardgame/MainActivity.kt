@@ -124,7 +124,7 @@ fun Card(
     ) {
         val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
         AsyncImage(
-            model = "file:///android_asset/CARD_BACK.svg",//card.assetName,
+            model = card.assetName,
             imageLoader = imageLoader,
             contentDescription = "Card",
         )
