@@ -1,5 +1,7 @@
 package com.example.cardgame
 
+import kotlin.random.Random
+
 
 interface LocalDataRepository {
     var player0Name: String
@@ -15,6 +17,9 @@ interface LocalDataRepository {
     var isPlayer1Active: Boolean
     var isPlayer2Active: Boolean
     var isPlayer3Active: Boolean
+
+    var isDialActive: Boolean
+    var dealerIndex: Int
 }
 
 object LocalData : LocalDataRepository {
@@ -61,6 +66,14 @@ object LocalData : LocalDataRepository {
     override var isPlayer3Active: Boolean by PreferencesDelegate(
         ::isPlayer3Active.name,
         true
+    )
+    override var isDialActive: Boolean by PreferencesDelegate(
+        ::isDialActive.name,
+        false
+    )
+    override var dealerIndex: Int by PreferencesDelegate(
+        ::dealerIndex.name,
+        Random.nextInt(4)
     )
 
     const val DEFAULT_PLAYER_0_NAME = "Me"

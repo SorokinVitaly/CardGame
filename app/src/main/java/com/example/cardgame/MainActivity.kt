@@ -83,6 +83,10 @@ fun MainScreen(state: ScreenState) {
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
+            Bank(
+                bankChips = state.bankChips,
+                modifier = Modifier.constrainAs(createRef()) { centerTo(parent) }
+            )
             state.players.forEachIndexed { i, player ->
                 Player(
                     playerData = player,
@@ -94,6 +98,15 @@ fun MainScreen(state: ScreenState) {
             }
         }
     }
+}
+
+@Composable
+fun ChipIcon() {
+    Icon(
+        imageVector = ImageVector.vectorResource(R.drawable.poker_chip),
+        tint = Color.Red,
+        contentDescription = "Poker chip"
+    )
 }
 
 @Composable
@@ -111,7 +124,7 @@ fun Card(
     ) {
         val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
         AsyncImage(
-            model = card.assetName,
+            model = "file:///android_asset/CARD_BACK.svg",//card.assetName,
             imageLoader = imageLoader,
             contentDescription = "Card",
         )
@@ -150,11 +163,7 @@ fun Player(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.poker_chip),
-                tint = Color.Red,
-                contentDescription = "Poker chip"
-            )
+            ChipIcon()
             Text(
                 text = playerData.chips.toString(),
                 style = MaterialTheme.typography.labelSmall,
@@ -167,6 +176,31 @@ fun Player(
             style = MaterialTheme.typography.labelSmall,
             color = Color.LightGray
         )
+    }
+}
+
+@Composable
+fun Bank(
+    bankChips: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.background(Color.DarkGray),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Bank",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ChipIcon()
+            Text(
+                text = bankChips.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+        }
     }
 }
 

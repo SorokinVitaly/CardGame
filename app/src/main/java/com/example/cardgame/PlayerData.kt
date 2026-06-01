@@ -18,6 +18,7 @@ data class PlayerData(
     val footerText = if (drawCount < 0) { "" } else { "Draw count: $drawCount " } + lastBet.name
     val isActive = type != PlayerType.NOT_ACTIVE
 
+    fun payChips(payed: Int) = copy(chips = chips - payed)
     fun sortCards() = copy(cards = cards.sortedBy { it.rank })
     fun addCard(card: Card) = copy(cards = cards + card)
     //fun removeCard(card: Card) = copy(cards = cards - card)
