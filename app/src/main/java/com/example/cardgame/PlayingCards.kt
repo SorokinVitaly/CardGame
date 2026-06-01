@@ -29,7 +29,7 @@ data class Card(
     val rank: CardRank,
     val suit: CardSuit = CardSuit.SPADE,
 ) {
-    val assetName = createAssetName(false)
+    val faceAssetName = createAssetName(false)
     val backAssetName = createAssetName(true)
 
     private fun createAssetName(isBack: Boolean): String {

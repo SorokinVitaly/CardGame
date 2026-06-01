@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,7 +40,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
-import com.example.cardgame.ui.theme.MyApplicationTheme
 
 
 class App : Application() {
@@ -60,28 +60,25 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
-                val viewModel by viewModels<MainViewModel>()
-                val state by viewModel.state.collectAsStateWithLifecycle()
-                MainScreen(state)
-                LaunchedEffect(0) {
-                    viewModel.dealingCards()
-                }
+            val viewModel by viewModels<MainViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            MainScreen(state)
+            LaunchedEffect(0) {
+                viewModel.dealingCards()
             }
+
         }
     }
 }
 
 @Composable
 fun MainScreen(state: ScreenState) {
-    Scaffold(
-        containerColor = Color.Cyan,
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
+    Surface(
+        color = Color.Cyan,
+        modifier = Modifier.navigationBarsPadding().fillMaxSize()
+    ) {
         ConstraintLayout(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize()
         ) {
             Bank(
                 bankChips = state.bankChips,
@@ -124,7 +121,7 @@ fun Card(
     ) {
         val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
         AsyncImage(
-            model = card.assetName,
+            model = card.faceAssetName,
             imageLoader = imageLoader,
             contentDescription = "Card",
         )
