@@ -123,7 +123,7 @@ class MainActivity : ComponentActivity() {
                 ChipIcon()
             } else {
                 if (state.isDealAvailable) {
-                    AppButton("Deal next")
+                    AppButton("Deal next", viewModel::dealingCards)
                 }
                 if (state.isResetAvailable) {
                     AppButton("Reset game", viewModel::onResetGame)
@@ -158,7 +158,7 @@ fun AppButton(text: String, onClick: () -> Unit = {}) {
 fun ChipIcon() {
     Icon(
         imageVector = ImageVector.vectorResource(R.drawable.poker_chip),
-        tint = Color.Yellow,
+        tint = Color.Red,
         contentDescription = "Poker chip"
     )
 }

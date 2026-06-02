@@ -14,6 +14,16 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     val state = _state.asStateFlow()
 
     private val deck = deckPokerWithJokers.toMutableList().apply { shuffle() }
+    private var isPostDraw = false
+    private var dealerIndex = 0
+    private var currentBet = 0
+    private var numOfRaise = 0
+
+    init {
+        if (localData.isGameStarted) {
+            onResetGame()
+        }
+    }
 
     fun onResetGame() {
         localData.resetGame()
@@ -22,6 +32,10 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     fun dealingCards() {
         viewModelScope.launch {
+            localData.isJustReset = false
+            localData.isGameStarted = true
+            _state.update { it.copy(isActionAvailable = false) }
+
             repeat(5) {
                 repeat(4) { index ->
                     if (_state.value.players[index].isActive) {
@@ -32,8 +46,13 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 }
             }
             delay(500L)
-            _state.update { it.copy(players = it.players.map { player -> player.sortCards() })
-            }
+
+            dealerIndex = localData.dealerIndex
+            isPostDraw = false
+            currentBet = 0
+            numOfRaise = 0
+            _state.update { it.copy(players = it.players.map { player -> player.sortCards() }) }
+            _state.update { it.copy(isActionAvailable = true, isBetAvailable = true) }
         }
     }
 
@@ -49,6 +68,8 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         isPostDraw = false
         currentBet = 0
         numOfRaise = 0
+
+        //========================
         // PreDraw раунд ставок
 
         isPostDraw = true
@@ -70,11 +91,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             isGameStarted = false
         }
     }
-
-    var dealerIndex = 0
-    var isPostDraw = false
-    var currentBet = 0
-    var numOfRaise = 0
 
     companion object {
         const val ANTE_BET = 1
