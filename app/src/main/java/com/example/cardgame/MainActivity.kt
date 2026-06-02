@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,7 +28,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,17 +61,12 @@ class App : Application() {
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val state by viewModel.state.collectAsStateWithLifecycle()
             MainScreen(state)
-            LaunchedEffect(0) {
-                viewModel.dealingCards()
-            }
-
         }
     }
 
@@ -133,12 +126,12 @@ class MainActivity : ComponentActivity() {
                     AppButton("Deal next")
                 }
                 if (state.isResetAvailable) {
-                    AppButton("Reset game")
+                    AppButton("Reset game", viewModel::onResetGame)
                 }
             }
         } else {
             CircularProgressIndicator(
-                color = Color.White,
+                color = Color.Yellow,
                 modifier = Modifier
                     .padding(8.dp)
                     .size(24.dp)
@@ -149,8 +142,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppButton(text: String, onClick: () -> Unit = {}) {
-    TextButton(onClick = onClick) {
-        Text(text = text)
+    TextButton(
+        onClick = onClick,
+        border = BorderStroke(2.dp, Color.Yellow),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = text,
+            color = Color.Yellow
+        )
     }
 }
 
@@ -158,7 +158,7 @@ fun AppButton(text: String, onClick: () -> Unit = {}) {
 fun ChipIcon() {
     Icon(
         imageVector = ImageVector.vectorResource(R.drawable.poker_chip),
-        tint = Color.Red,
+        tint = Color.Yellow,
         contentDescription = "Poker chip"
     )
 }
@@ -205,13 +205,9 @@ fun Player(
         )
 
         Box {
-            if (playerData.cards.isEmpty()) {
-                Spacer(modifier = Modifier.height(cardHeight))
-            } else {
-                playerData.cards.forEachIndexed { index, card ->
-                    Box(modifier = Modifier.padding(start = (index * 20).dp)) {
-                        Card(card)
-                    }
+            playerData.cards.forEachIndexed { index, card ->
+                Box(modifier = Modifier.padding(start = (index * 20).dp)) {
+                    Card(card)
                 }
             }
         }

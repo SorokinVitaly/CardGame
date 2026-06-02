@@ -2,20 +2,23 @@ package com.example.cardgame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cardgame.LocalData.DEFAULT_CHIP_NUMBER
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 
 class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel() {
-    private val _state = MutableStateFlow(ScreenState(initPlayers(localData)))
+    private val _state = MutableStateFlow(localData.savedState())
     val state = _state.asStateFlow()
 
     private val deck = deckPokerWithJokers.toMutableList().apply { shuffle() }
+
+    fun onResetGame() {
+        localData.resetGame()
+        _state.update { localData.savedState() }
+    }
 
     fun dealingCards() {
         viewModelScope.launch {
@@ -29,29 +32,14 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 }
             }
             delay(500L)
-            _state.update { oldState ->
-                oldState.copy(players = oldState.players.map { it.sortCards() })
+            _state.update { it.copy(players = it.players.map { player -> player.sortCards() })
             }
-        }
-    }
-
-    fun resetGame() {
-        with (localData) {
-            player0Chips = DEFAULT_CHIP_NUMBER
-            player1Chips = DEFAULT_CHIP_NUMBER
-            player2Chips = DEFAULT_CHIP_NUMBER
-            player3Chips = DEFAULT_CHIP_NUMBER
-            isPlayer1Active = true
-            isPlayer2Active = true
-            isPlayer3Active = true
-            //isDialActive = false
-            dealerIndex = Random.nextInt(4)
         }
     }
 
     fun newDial() {
         if (localData.isGameStarted) {
-            resetGame()
+            onResetGame()
         }
         dealerIndex = localData.dealerIndex
         localData.isGameStarted = true

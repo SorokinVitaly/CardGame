@@ -14,13 +14,12 @@ interface LocalDataRepository {
     var player2Chips: Int
     var player3Chips: Int
 
-    var isPlayer1Active: Boolean
-    var isPlayer2Active: Boolean
-    var isPlayer3Active: Boolean
-
     var isGameStarted: Boolean
     var isJustReset: Boolean
     var dealerIndex: Int
+
+    fun resetGame()
+    fun savedState(): ScreenState
 }
 
 object LocalData : LocalDataRepository {
@@ -56,18 +55,6 @@ object LocalData : LocalDataRepository {
         ::player3Chips.name,
         DEFAULT_CHIP_NUMBER
     )
-    override var isPlayer1Active: Boolean by PreferencesDelegate(
-        ::isPlayer1Active.name,
-        true
-    )
-    override var isPlayer2Active: Boolean by PreferencesDelegate(
-        ::isPlayer2Active.name,
-        true
-    )
-    override var isPlayer3Active: Boolean by PreferencesDelegate(
-        ::isPlayer3Active.name,
-        true
-    )
     override var isGameStarted: Boolean by PreferencesDelegate(
         ::isGameStarted.name,
         false
@@ -81,41 +68,47 @@ object LocalData : LocalDataRepository {
         Random.nextInt(4)
     )
 
+    override fun resetGame() {
+        player0Chips = DEFAULT_CHIP_NUMBER
+        player1Chips = DEFAULT_CHIP_NUMBER
+        player2Chips = DEFAULT_CHIP_NUMBER
+        player3Chips = DEFAULT_CHIP_NUMBER
+        isGameStarted = false
+        isJustReset = true
+        dealerIndex = Random.nextInt(4)
+    }
+
+    override fun savedState(): ScreenState {
+        val player0 = PlayerData(
+            name = player0Name,
+            chips = player0Chips
+        )
+        val player1 = PlayerData(
+            name = player1Name,
+            chips = player1Chips
+        )
+        val player2 = PlayerData(
+            name = player2Name,
+            chips = player2Chips
+        )
+        val player3 = PlayerData(
+            name = player3Name,
+            chips = player3Chips
+        )
+
+        return ScreenState(
+            players = listOf(player0, player1, player2, player3),
+            bankChips = 0,
+            isActionAvailable = true,
+            isDealAvailable = true,
+            isResetAvailable = !isJustReset,
+            isBetAvailable = false
+        )
+    }
+
     const val DEFAULT_PLAYER_0_NAME = "Me"
     const val DEFAULT_PLAYER_1_NAME = "Lesley Colon"
     const val DEFAULT_PLAYER_2_NAME = "Leon Kim"
     const val DEFAULT_PLAYER_3_NAME = "Vanessa May"
     const val DEFAULT_CHIP_NUMBER = 1000
-}
-
-fun initPlayers(localData: LocalDataRepository): List<PlayerData> {
-    fun isPlayerActive(isActive: Boolean): PlayerType =
-        if (isActive) {
-            PlayerType.ACTIVE
-        } else {
-            PlayerType.NOT_ACTIVE
-        }
-
-    val player0 = PlayerData(
-        name = localData.player0Name,
-        type = PlayerType.IT_ME,
-        chips = localData.player0Chips
-    )
-    val player1 = PlayerData(
-        name = localData.player1Name,
-        type = isPlayerActive(localData.isPlayer1Active),
-        chips = localData.player1Chips
-    )
-    val player2 = PlayerData(
-        name = localData.player2Name,
-        type = isPlayerActive(localData.isPlayer2Active),
-        chips = localData.player2Chips
-    )
-    val player3 = PlayerData(
-        name = localData.player3Name,
-        type = isPlayerActive(localData.isPlayer3Active),
-        chips = localData.player3Chips
-    )
-
-    return listOf(player0, player1, player2, player3)
 }

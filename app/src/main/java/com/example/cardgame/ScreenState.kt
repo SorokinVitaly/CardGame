@@ -6,11 +6,11 @@ import androidx.compose.runtime.Immutable
 @Immutable
 data class ScreenState(
     val players: List<PlayerData>,
-    val bankChips: Int = 0,
-    val isActionAvailable: Boolean = true,
-    val isDealAvailable: Boolean = true,
-    val isResetAvailable: Boolean = true,
-    val isBetAvailable: Boolean = false
+    val bankChips: Int,
+    val isActionAvailable: Boolean,
+    val isDealAvailable: Boolean,
+    val isResetAvailable: Boolean,
+    val isBetAvailable: Boolean
 ) {
     init {
         if (players.size != 4) {
