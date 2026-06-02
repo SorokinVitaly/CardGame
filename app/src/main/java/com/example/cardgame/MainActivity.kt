@@ -7,23 +7,27 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstrainScope
@@ -56,11 +61,13 @@ class App : Application() {
 }
 
 class MainActivity : ComponentActivity() {
+    private val viewModel by viewModels<MainViewModel>()
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val viewModel by viewModels<MainViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
             MainScreen(state)
             LaunchedEffect(0) {
@@ -69,31 +76,81 @@ class MainActivity : ComponentActivity() {
 
         }
     }
+
+    @Composable
+    fun MainScreen(state: ScreenState) {
+        Surface(
+            color = colorResource(R.color.backGround),
+            modifier = Modifier
+                .navigationBarsPadding()
+                .fillMaxSize()
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                ConstraintLayout(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(12f)
+                ) {
+                    Bank(
+                        bankChips = state.bankChips,
+                        modifier = Modifier.constrainAs(createRef()) { centerTo(parent) }
+                    )
+                    state.players.forEachIndexed { i, player ->
+                        Player(
+                            playerData = player,
+                            modifier = Modifier.constrainAs(
+                                createRef(),
+                                playerConstraint(i)
+                            )
+                        )
+                    }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    ActionBar(state)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ActionBar(state: ScreenState) {
+        if (state.isActionAvailable) {
+            if (state.isBetAvailable) {
+                ChipIcon()
+                ChipIcon()
+                ChipIcon()
+            } else {
+                if (state.isDealAvailable) {
+                    AppButton("Deal next")
+                }
+                if (state.isResetAvailable) {
+                    AppButton("Reset game")
+                }
+            }
+        } else {
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(24.dp)
+            )
+        }
+    }
 }
 
 @Composable
-fun MainScreen(state: ScreenState) {
-    Surface(
-        color = Color.Cyan,
-        modifier = Modifier.navigationBarsPadding().fillMaxSize()
-    ) {
-        ConstraintLayout(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Bank(
-                bankChips = state.bankChips,
-                modifier = Modifier.constrainAs(createRef()) { centerTo(parent) }
-            )
-            state.players.forEachIndexed { i, player ->
-                Player(
-                    playerData = player,
-                    modifier = Modifier.constrainAs(
-                        createRef(),
-                        playerConstraint(i)
-                    )
-                )
-            }
-        }
+fun AppButton(text: String, onClick: () -> Unit = {}) {
+    TextButton(onClick = onClick) {
+        Text(text = text)
     }
 }
 
@@ -138,8 +195,8 @@ fun Player(
     }
 
     Column(
-        modifier = modifier.background(Color.DarkGray),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
     ) {
         Text(
             text = playerData.name,
@@ -182,8 +239,8 @@ fun Bank(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.background(Color.DarkGray),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
     ) {
         Text(
             text = "Bank",
@@ -207,18 +264,22 @@ private fun playerConstraint(index: Int): ConstrainScope.() -> Unit = {
             centerHorizontallyTo(parent)
             bottom.linkTo(parent.bottom, margin = 5.dp)
         }
+
         1 -> {
             centerVerticallyTo(parent)
             absoluteLeft.linkTo(parent.absoluteLeft, margin = 5.dp)
         }
+
         2 -> {
             centerHorizontallyTo(parent)
             top.linkTo(parent.top, margin = 5.dp)
         }
+
         3 -> {
             centerVerticallyTo(parent)
             absoluteRight.linkTo(parent.absoluteRight, margin = 5.dp)
         }
+
         else -> throw IllegalArgumentException("Invalid player index: $index")
     }
 }

@@ -18,7 +18,8 @@ interface LocalDataRepository {
     var isPlayer2Active: Boolean
     var isPlayer3Active: Boolean
 
-    var isDialActive: Boolean
+    var isGameStarted: Boolean
+    var isJustReset: Boolean
     var dealerIndex: Int
 }
 
@@ -67,8 +68,12 @@ object LocalData : LocalDataRepository {
         ::isPlayer3Active.name,
         true
     )
-    override var isDialActive: Boolean by PreferencesDelegate(
-        ::isDialActive.name,
+    override var isGameStarted: Boolean by PreferencesDelegate(
+        ::isGameStarted.name,
+        false
+    )
+    override var isJustReset: Boolean by PreferencesDelegate(
+        ::isJustReset.name,
         false
     )
     override var dealerIndex: Int by PreferencesDelegate(

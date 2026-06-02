@@ -19,7 +19,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     fun dealingCards() {
         viewModelScope.launch {
-            _state.update { it.copy(isDealing = true) }
             repeat(5) {
                 repeat(4) { index ->
                     if (_state.value.players[index].isActive) {
@@ -33,13 +32,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             _state.update { oldState ->
                 oldState.copy(players = oldState.players.map { it.sortCards() })
             }
-            _state.update { it.copy(isDealing = false) }
-
-            delay(1000L)
-            _state.update { it.payToBank(0, 10) }
-
-            delay(1000L)
-            _state.update { it.takeBank(0) }
         }
     }
 
@@ -52,17 +44,17 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             isPlayer1Active = true
             isPlayer2Active = true
             isPlayer3Active = true
-            isDialActive = false
+            //isDialActive = false
             dealerIndex = Random.nextInt(4)
         }
     }
 
     fun newDial() {
-        if (localData.isDialActive) {
+        if (localData.isGameStarted) {
             resetGame()
         }
         dealerIndex = localData.dealerIndex
-        localData.isDialActive = true
+        localData.isGameStarted = true
 
         // раздать карты
 
@@ -87,7 +79,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             player2Chips = _state.value.players[2].chips
             player3Chips = _state.value.players[3].chips
             dealerIndex = dealerIndex
-            isDialActive = false
+            isGameStarted = false
         }
     }
 
