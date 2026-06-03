@@ -25,41 +25,58 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         }
     }
 
-    /*        private var current = 0
-
-            override fun hasNext(): Boolean = current < max
-            override fun next(): Int = current++*/
-
-
     fun onResetGame() {
         localData.resetGame()
         _state.update { localData.savedState() }
     }
 
-    fun dealingCards() {
+    fun onDialNext() {
         viewModelScope.launch {
             localData.isJustReset = false
             localData.isGameStarted = true
             _state.update { it.copy(isActionAvailable = false) }
 
-            repeat(5) {
-                repeat(4) { index ->
-                    if (_state.value.players[index].isActive) {
-                        delay(250L)
-                        val card = deck.removeAt(deck.lastIndex)
-                        _state.update { it.updatePlayer(index) { addCard(card) } }
-                    }
-                }
-            }
-            delay(500L)
+            payAnte()
+            dealingCards()
 
-            dealerIndex = localData.dealerIndex
             isPostDraw = false
-            currentBet = 0
-            numOfRaise = 0
-            _state.update { it.copy(players = it.players.map { player -> player.sortCards() }) }
+            betRound()
+
+            isPostDraw = true
+            betRound()
+
             _state.update { it.copy(isActionAvailable = true, isBetAvailable = true) }
         }
+    }
+
+    private suspend fun payAnte() {
+        repeat(4) { index ->
+            if (player(index).isActive) {
+                delay(300L)
+                _state.update { it.payToBank(index, ANTE_BET) }
+            }
+        }
+    }
+
+    private suspend fun dealingCards() {
+        repeat(5) {
+            repeat(4) { index ->
+                if (player(index).isActive) {
+                    delay(300L)
+                    val card = deck.removeAt(deck.lastIndex)
+                    _state.update { it.updatePlayer(index) { addCard(card) } }
+                }
+            }
+        }
+        delay(500L)
+        _state.update { it.copy(players = it.players.map { player -> player.sortCards() }) }
+    }
+
+    private suspend fun betRound() {
+        dealerIndex = localData.dealerIndex
+        currentBet = 0
+        numOfRaise = 0
+
     }
 
     fun newDial() {
@@ -89,13 +106,48 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         dealerIndex = (dealerIndex + 1) and 3
 
         with (localData) {
-            player0Chips = _state.value.players[0].chips
-            player1Chips = _state.value.players[1].chips
-            player2Chips = _state.value.players[2].chips
-            player3Chips = _state.value.players[3].chips
+            player0Chips = player(0).chips
+            player1Chips = player(1).chips
+            player2Chips = player(2).chips
+            player3Chips = player(3).chips
             dealerIndex = dealerIndex
             isGameStarted = false
         }
+    }
+
+    private fun player(index: Int) = _state.value.players[index]
+
+    private fun availableBets(playerIndex: Int): List<BetType> {
+        val (betCount, raiseCount) = if (isPostDraw) POST_DRAW_BET to POST_DRAW_RAISE else PRE_DRAW_BET to PRE_DRAW_RAISE
+        val chips = player(playerIndex).chips
+        val bets = ArrayList<BetType>()
+        if (currentBet == 0) {
+            bets.add(BetType.Check())
+            if (chips >= betCount) {
+                bets.add(BetType.Bet(betCount))
+            }
+            bets.add(BetType.Fold())
+        } else {
+            if (chips >= currentBet) {
+                bets.add(BetType.Call(currentBet))
+            }
+            if (chips >= currentBet + raiseCount && numOfRaise < MAX_NUM_OF_RAISE) {
+                bets.add(BetType.Raise(currentBet + raiseCount))
+            }
+            bets.add(BetType.Fold())
+        }
+        return bets
+    }
+
+    private fun forEachInGamePlayer(block: (Int) -> Unit) {
+
+
+        val firstIndex = (dealerIndex + 1) and 3
+        var currentIndex = firstIndex
+        do {
+            block(currentIndex)
+            currentIndex = (currentIndex + 1) and 3
+        } while (currentIndex != firstIndex)
     }
 
     companion object {

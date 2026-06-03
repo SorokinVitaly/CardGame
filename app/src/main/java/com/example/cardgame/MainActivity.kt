@@ -123,7 +123,7 @@ class MainActivity : ComponentActivity() {
                 ChipIcon()
             } else {
                 if (state.isDealAvailable) {
-                    AppButton("Deal next", viewModel::dealingCards)
+                    AppButton("Deal next", viewModel::onDialNext)
                 }
                 if (state.isResetAvailable) {
                     AppButton("Reset game", viewModel::onResetGame)
