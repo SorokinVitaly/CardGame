@@ -81,26 +81,31 @@ object LocalData : LocalDataRepository {
     override fun savedState(): ScreenState {
         val player0 = PlayerData(
             name = player0Name,
-            chips = player0Chips
+            chips = player0Chips,
+            isActive = player0Chips > 0
         )
         val player1 = PlayerData(
             name = player1Name,
-            chips = player1Chips
+            chips = player1Chips,
+            isActive = player1Chips > 0
         )
         val player2 = PlayerData(
             name = player2Name,
-            chips = player2Chips
+            chips = player2Chips,
+            isActive = player2Chips > 0
         )
         val player3 = PlayerData(
             name = player3Name,
-            chips = player3Chips
+            chips = player3Chips,
+            isActive = player3Chips > 0
         )
+        val players = listOf(player0, player1, player2, player3)
 
         return ScreenState(
-            players = listOf(player0, player1, player2, player3),
+            players = players,
             bankChips = 0,
             isActionAvailable = true,
-            isDealAvailable = true,
+            isDealAvailable = players.first().isActive && players.count { it.isActive } > 1,
             isResetAvailable = !isJustReset,
             isBetAvailable = false
         )

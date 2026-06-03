@@ -6,10 +6,10 @@ data class PlayerData(
     val cards: List<Card> = emptyList(),
     val chips: Int = 0,
     val drawCount: Int = -1,
-    val lastBet: LastBet = LastBet.NoBet()
+    val isActive: Boolean,
+    val lastBet: BetType = BetType.NoBet()
 ) {
     val footerText = if (drawCount < 0) { "" } else { "Draw count: $drawCount " } + lastBet.name
-    val isActive = chips > 0
 
     fun payChips(payed: Int) = copy(chips = chips - payed)
     fun sortCards() = copy(cards = cards.sortedBy { it.rank })

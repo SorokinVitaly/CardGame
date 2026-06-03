@@ -25,6 +25,12 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         }
     }
 
+    /*        private var current = 0
+
+            override fun hasNext(): Boolean = current < max
+            override fun next(): Int = current++*/
+
+
     fun onResetGame() {
         localData.resetGame()
         _state.update { localData.savedState() }
