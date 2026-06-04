@@ -17,6 +17,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     private var isPostDraw = false
     private var currentBet = 0
     private var numOfRaise = 0
+    private var playerIndex = localData.dealerIndex
 
     init {
         if (localData.isGameStarted) {
@@ -40,7 +41,14 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             dealingCards()
 
             isPostDraw = false
-            betRound()
+            continueGame()
+        }
+    }
+
+    fun onDraw() {
+    }
+
+/*            betRound()
 
             isPostDraw = true
             betRound()
@@ -57,8 +65,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 isGameStarted = false
             }
             _state.update { it.copy(isActionAvailable = true) }
-        }
-    }
+*/
 
     private suspend fun payAnte() {
         repeat(4) { index ->
@@ -84,12 +91,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         _state.update { it.updateAllPlayers { sortCards() } }
     }
 
-    private suspend fun betRound() {
-        currentBet = 0
-        numOfRaise = 0
-
-    }
-
     private fun newDeck() {
         deck.clear()
         deck.addAll(deckPoker)
@@ -97,6 +98,10 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     }
 
     private fun player(index: Int) = _state.value.players[index]
+
+    private fun continueGame() {
+
+    }
 
     private fun nextInGameIndex(index: Int): Int {
         val first = (index + 1) and 3
@@ -113,24 +118,24 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         }
     }
 
-    private fun availableBets(playerIndex: Int): List<BetType> {
+    private fun availableBets(playerIndex: Int): List<ActionType> {
         val (betCount, raiseCount) = if (isPostDraw) POST_DRAW_BET to POST_DRAW_RAISE else PRE_DRAW_BET to PRE_DRAW_RAISE
         val chips = player(playerIndex).chips
-        val bets = ArrayList<BetType>()
+        val bets = ArrayList<ActionType>()
         if (currentBet == 0) {
-            bets.add(BetType.Check())
+            bets.add(ActionType.Check())
             if (chips >= betCount) {
-                bets.add(BetType.Bet(betCount))
+                bets.add(ActionType.Bet(betCount))
             }
-            bets.add(BetType.Fold())
+            bets.add(ActionType.Fold())
         } else {
             if (chips >= currentBet) {
-                bets.add(BetType.Call(currentBet))
+                bets.add(ActionType.Call(currentBet))
             }
             if (chips >= currentBet + raiseCount && numOfRaise < MAX_NUM_OF_RAISE) {
-                bets.add(BetType.Raise(currentBet + raiseCount))
+                bets.add(ActionType.Raise(currentBet + raiseCount))
             }
-            bets.add(BetType.Fold())
+            bets.add(ActionType.Fold())
         }
         return bets
     }

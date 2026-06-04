@@ -6,8 +6,9 @@ import androidx.compose.runtime.Immutable
 @Immutable
 data class ScreenState(
     val players: List<PlayerData>,
-    val betAvailable: List<BetType>,
+    val betAvailable: List<ActionType>,
     val bankChips: Int,
+    val isDrawEnabled: Boolean,
     val isActionAvailable: Boolean,
     val isDealAvailable: Boolean,
     val isResetAvailable: Boolean
@@ -30,7 +31,7 @@ data class ScreenState(
             bankChips = bankChips + payed
         )
 
-    fun takeBank(index: Int) = payToBank(index, -bankChips)
+    //fun takeBank(index: Int) = payToBank(index, -bankChips)
 
     private fun updateOnePlayer(index: Int, update: PlayerData.() -> PlayerData) =
         players.mapIndexed { i, player ->

@@ -105,6 +105,7 @@ object LocalData : LocalDataRepository {
             players = players,
             betAvailable = emptyList(),
             bankChips = 0,
+            isDrawEnabled = false,
             isActionAvailable = true,
             isDealAvailable = players.first().isActive && players.count { it.isActive } > 1,
             isResetAvailable = !isJustReset

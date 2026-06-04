@@ -5,12 +5,16 @@ data class PlayerData(
     val name: String,
     val cards: List<Card> = emptyList(),
     val chips: Int = 0,
-    val drawCount: Int = -1,
     val isActive: Boolean,
-    val lastBet: BetType = BetType.NoBet()
+    val lastDrawAction: ActionType = ActionType.NoAction(),
+    val lastBet: ActionType = ActionType.NoAction()
 ) {
-    val isInGame = isActive && lastBet !is BetType.Fold
-    val footerText = if (drawCount < 0) { "" } else { "Draw count: $drawCount " } + lastBet.name
+    val isInGame = isActive && lastBet !is ActionType.Fold
+    val footerText = if (lastDrawAction !is ActionType.Draw) {
+        ""
+    } else {
+        "Draw count: ${lastDrawAction.number} "
+    } + lastBet.name
 
     fun payChips(payed: Int) = copy(chips = chips - payed)
     fun clearCards() = copy(cards =emptyList())

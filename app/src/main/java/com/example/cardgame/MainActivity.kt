@@ -128,6 +128,9 @@ class MainActivity : ComponentActivity() {
                 if (state.isResetAvailable) {
                     AppButton("Reset game", viewModel::onResetGame)
                 }
+                if (state.isDrawEnabled) {
+                    AppButton("Draw", viewModel::onDraw)
+                }
             }
         } else {
             CircularProgressIndicator(
