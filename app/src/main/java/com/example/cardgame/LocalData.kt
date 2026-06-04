@@ -103,11 +103,11 @@ object LocalData : LocalDataRepository {
 
         return ScreenState(
             players = players,
+            betAvailable = emptyList(),
             bankChips = 0,
             isActionAvailable = true,
             isDealAvailable = players.first().isActive && players.count { it.isActive } > 1,
-            isResetAvailable = !isJustReset,
-            isBetAvailable = false
+            isResetAvailable = !isJustReset
         )
     }
 

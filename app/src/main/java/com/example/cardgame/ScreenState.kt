@@ -6,17 +6,20 @@ import androidx.compose.runtime.Immutable
 @Immutable
 data class ScreenState(
     val players: List<PlayerData>,
+    val betAvailable: List<BetType>,
     val bankChips: Int,
     val isActionAvailable: Boolean,
     val isDealAvailable: Boolean,
-    val isResetAvailable: Boolean,
-    val isBetAvailable: Boolean
+    val isResetAvailable: Boolean
 ) {
     init {
         if (players.size != 4) {
             throw IllegalStateException("Wrong number of players")
         }
     }
+
+    fun updateAllPlayers(update: PlayerData.() -> PlayerData) =
+        copy(players = players.map { it.update() })
 
     fun updatePlayer(index: Int, update: PlayerData.() -> PlayerData) =
         copy(players = updateOnePlayer(index, update))

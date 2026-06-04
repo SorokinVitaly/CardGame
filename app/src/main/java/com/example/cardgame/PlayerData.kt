@@ -9,9 +9,11 @@ data class PlayerData(
     val isActive: Boolean,
     val lastBet: BetType = BetType.NoBet()
 ) {
+    val isInGame = isActive && lastBet !is BetType.Fold
     val footerText = if (drawCount < 0) { "" } else { "Draw count: $drawCount " } + lastBet.name
 
     fun payChips(payed: Int) = copy(chips = chips - payed)
+    fun clearCards() = copy(cards =emptyList())
     fun sortCards() = copy(cards = cards.sortedBy { it.rank })
     fun addCard(card: Card) = copy(cards = cards + card)
     //fun removeCard(card: Card) = copy(cards = cards - card)
