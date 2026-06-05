@@ -103,7 +103,7 @@ object LocalData : LocalDataRepository {
 
         return ScreenState(
             players = players,
-            betAvailable = emptyList(),
+            actionsAvailable = emptyList(),
             bankChips = 0,
             isDrawEnabled = false,
             isActionAvailable = true,

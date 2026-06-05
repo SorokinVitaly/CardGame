@@ -117,7 +117,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun ActionBar(state: ScreenState) {
         if (state.isActionAvailable) {
-            if (state.betAvailable.isNotEmpty()) {
+            if (state.actionsAvailable.isNotEmpty()) {
                 ChipIcon()
                 ChipIcon()
                 ChipIcon()

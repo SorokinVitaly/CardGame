@@ -6,14 +6,14 @@ data class PlayerData(
     val cards: List<Card> = emptyList(),
     val chips: Int = 0,
     val isActive: Boolean,
-    val lastDrawAction: ActionType = ActionType.NoAction(),
+    val lastDraw: ActionType = ActionType.NoAction(),
     val lastBet: ActionType = ActionType.NoAction()
 ) {
     val isInGame = isActive && lastBet !is ActionType.Fold
-    val footerText = if (lastDrawAction !is ActionType.Draw) {
+    val footerText = if (lastDraw !is ActionType.Draw) {
         ""
     } else {
-        "Draw count: ${lastDrawAction.number} "
+        "Draw count: ${lastDraw.number} "
     } + lastBet.name
 
     fun payChips(payed: Int) = copy(chips = chips - payed)

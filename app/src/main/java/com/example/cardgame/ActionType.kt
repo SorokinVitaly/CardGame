@@ -6,6 +6,6 @@ sealed class ActionType(val name: String, val bet: Int = 0) {
     class Raise(bet: Int) : ActionType("Raise $bet", bet)
     class Check : ActionType("Check")
     class Fold : ActionType("Fold")
-    class Draw(val number: Int) : ActionType("Draw $number")
+    class Draw(val number: Int = 0) : ActionType("Draw $number")
     class NoAction : ActionType("")
 }

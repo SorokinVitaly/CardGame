@@ -6,7 +6,7 @@ import androidx.compose.runtime.Immutable
 @Immutable
 data class ScreenState(
     val players: List<PlayerData>,
-    val betAvailable: List<ActionType>,
+    val actionsAvailable: List<ActionType>,
     val bankChips: Int,
     val isDrawEnabled: Boolean,
     val isActionAvailable: Boolean,
