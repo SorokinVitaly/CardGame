@@ -28,7 +28,7 @@ enum class CardRank {
 data class Card(
     val rank: CardRank,
     val suit: CardSuit = CardSuit.SPADE,
-) {
+) : Comparable<Card> {
     val faceAssetName = createAssetName(false)
     val backAssetName = createAssetName(true)
 
@@ -49,6 +49,9 @@ data class Card(
         }
         return "$prefix${suit.name}-$rankName$postfix"
     }
+
+    override fun compareTo(other: Card): Int =
+        compareValuesBy(this, other, { it.rank }, { it.suit })
 }
 
 private val jokerCard = Card(CardRank.JOKER)
