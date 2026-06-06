@@ -1,5 +1,6 @@
 package com.example.cardgame
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
@@ -45,22 +46,12 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             payAnte()
             dealingCards()
             roundType = RoundType.PRE_DRAW
-            continueGame()
+            //continueGame()
         }
     }
 
     fun onDraw() {
     }
-
-/*         with (localData) {
-                player0Chips = player(0).chips
-                player1Chips = player(1).chips
-                player2Chips = player(2).chips
-                player3Chips = player(3).chips
-                isGameStarted = false
-            }
-            _state.update { it.copy(isActionAvailable = true) }
-*/
 
     private suspend fun payAnte() {
         repeat(4) { index ->
@@ -72,9 +63,13 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     }
 
     private suspend fun dealingCards() {
+        Log.e(null, "dealingCards 0")
         _state.update { it.updateAllPlayers { clearCards() } }
         repeat(5) {
             repeat(4) { index ->
+
+                Log.e(null, "dealingCards 1")
+
                 if (player(index).isActive) {
                     delay(300L)
                     val card = deck.removeAt(deck.lastIndex)
@@ -82,8 +77,17 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 }
             }
         }
+
+        Log.e(null, "dealingCards 2")
+
         delay(500L)
+
+        Log.e(null, "dealingCards 3")
+
         _state.update { it.updateAllPlayers { sortCards() } }
+
+        Log.e(null, "dealingCards 4")
+
     }
 
     private fun newDeck() {

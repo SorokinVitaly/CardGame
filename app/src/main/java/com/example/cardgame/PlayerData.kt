@@ -17,8 +17,8 @@ data class PlayerData(
     } + lastBet.name
 
     fun payChips(payed: Int) = copy(chips = chips - payed)
-    fun clearCards() = copy(cards =emptyList())
-    fun sortCards() = copy(cards = cards.sortedWith(compareBy<Card> { it.rank }.thenBy { it.suit }))
+    fun clearCards() = copy(cards = emptyList())
+    fun sortCards() = copy(cards = cards.sorted())
     fun addCard(card: Card) = copy(cards = cards + card)
     //fun removeCard(card: Card) = copy(cards = cards - card)
     //fun changeCard(oldCard: Card, newCard: Card) = copy(cards = cards - oldCard + newCard)
