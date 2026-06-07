@@ -43,11 +43,18 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             localData.isGameStarted = true
             _state.update { it.copy(isActionAvailable = false) }
             newDeck()
-            payAnte()
             dealingCards()
+            payAnte()
+            currentBet = 0
+            numOfRaise = 0
             roundType = RoundType.PRE_DRAW
-            //continueGame()
+            mainGameLoop()
         }
+    }
+
+    fun onAction(action: ActionType) {
+        applyAction(0, action)
+        mainGameLoop()
     }
 
     fun onDraw() {
@@ -63,13 +70,9 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     }
 
     private suspend fun dealingCards() {
-        Log.e(null, "dealingCards 0")
         _state.update { it.updateAllPlayers { clearCards() } }
         repeat(5) {
             repeat(4) { index ->
-
-                Log.e(null, "dealingCards 1")
-
                 if (player(index).isActive) {
                     delay(300L)
                     val card = deck.removeAt(deck.lastIndex)
@@ -77,17 +80,8 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 }
             }
         }
-
-        Log.e(null, "dealingCards 2")
-
         delay(500L)
-
-        Log.e(null, "dealingCards 3")
-
         _state.update { it.updateAllPlayers { sortCards() } }
-
-        Log.e(null, "dealingCards 4")
-
     }
 
     private fun newDeck() {
@@ -98,10 +92,15 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     private fun player(index: Int) = _state.value.players[index]
 
-    private fun continueGame() {
+    private fun mainGameLoop() {
         while (true) {
             if (_state.value.players.count { it.isInGame } == 1) {
-                // end game
+                val winIndex = _state.value.players.indexOfFirst { it.isInGame }
+                _state.update { it.takeBank(winIndex) }
+                localData.saveState(_state.value)
+                _state.update { localData.savedState() }
+                localData.dealerIndex = nextInGameIndex(localData.dealerIndex)
+                return
             }
             if (_state.value.players.all { it.lastBet.bet == currentBet }) {
                 // end round
@@ -109,12 +108,29 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             playerIndex = nextInGameIndex(playerIndex)
             val availableActions = availableActions(playerIndex)
             if (playerIndex == 0) {
-                // user action
+                _state.update { it.copy(isActionAvailable = true, actionsAvailable = availableActions) }
+                return
             } else {
-                // bot action
+                val action = botBetting(playerIndex, availableActions)
+                applyAction(playerIndex, action)
             }
-            // register action
         }
+    }
+
+    private fun botBetting(index: Int, availableActions: List<ActionType>): ActionType {
+        return availableActions.random()
+    }
+
+    private fun applyAction(index: Int, action: ActionType) {
+        log("$index: ${action.name}")
+        if (action is ActionType.Raise) {
+            numOfRaise++
+        }
+        if (action.bet > 0) {
+            currentBet = action.bet
+            _state.update { it.payToBank(index, action.bet) }
+        }
+        _state.update { it.updatePlayer(index) { copy(lastBet = action) } }
     }
 
     private fun nextInGameIndex(index: Int): Int {
@@ -156,6 +172,8 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         }
         return bets
     }
+
+    private fun log(mess: String) = Log.e("GamePlay", mess)
 
     companion object {
         const val ANTE_BET = 1

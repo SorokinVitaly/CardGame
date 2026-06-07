@@ -94,6 +94,7 @@ class MainActivity : ComponentActivity() {
                     state.players.forEachIndexed { i, player ->
                         Player(
                             playerData = player,
+                            isCardsOpen = if (i == 0) true else state.isCardsOpen,
                             modifier = Modifier.constrainAs(
                                 createRef(),
                                 playerConstraint(i)
@@ -118,9 +119,9 @@ class MainActivity : ComponentActivity() {
     fun ActionBar(state: ScreenState) {
         if (state.isActionAvailable) {
             if (state.actionsAvailable.isNotEmpty()) {
-                ChipIcon()
-                ChipIcon()
-                ChipIcon()
+                state.actionsAvailable.forEach { action ->
+                    AppButton(action.name) { viewModel.onAction(action) }
+                }
             } else {
                 if (state.isDealAvailable) {
                     AppButton("Deal next", viewModel::onDialNext)
@@ -169,8 +170,10 @@ fun ChipIcon() {
 @Composable
 fun Card(
     card: Card,
+    isCardsOpen: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val assetName = if (isCardsOpen) card.faceAssetName else card.backAssetName
     Card(
         border = BorderStroke(width = 1.dp, color = Color.Black),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -181,7 +184,7 @@ fun Card(
     ) {
         val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
         AsyncImage(
-            model = card.faceAssetName,
+            model = assetName,
             imageLoader = imageLoader,
             contentDescription = "Card",
         )
@@ -191,6 +194,7 @@ fun Card(
 @Composable
 fun Player(
     playerData: PlayerData,
+    isCardsOpen: Boolean,
     modifier: Modifier = Modifier
 ) {
     if (!playerData.isActive) {
@@ -210,7 +214,7 @@ fun Player(
         Box {
             playerData.cards.forEachIndexed { index, card ->
                 Box(modifier = Modifier.padding(start = (index * 20).dp)) {
-                    Card(card)
+                    Card(card, isCardsOpen)
                 }
             }
         }

@@ -11,7 +11,8 @@ data class ScreenState(
     val isDrawEnabled: Boolean,
     val isActionAvailable: Boolean,
     val isDealAvailable: Boolean,
-    val isResetAvailable: Boolean
+    val isResetAvailable: Boolean,
+    val isCardsOpen: Boolean
 ) {
     init {
         if (players.size != 4) {
@@ -31,10 +32,15 @@ data class ScreenState(
             bankChips = bankChips + payed
         )
 
-    //fun takeBank(index: Int) = payToBank(index, -bankChips)
+    fun takeBank(index: Int) = payToBank(index, -bankChips)
 
     private fun updateOnePlayer(index: Int, update: PlayerData.() -> PlayerData) =
         players.mapIndexed { i, player ->
             if (index == i) player.update() else player
         }
+
+    companion object {
+        fun isDealAvailable(players: List<PlayerData>): Boolean =
+            players.first().isActive && players.count { it.isActive } > 1
+    }
 }

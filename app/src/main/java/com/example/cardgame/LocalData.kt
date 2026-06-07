@@ -20,6 +20,7 @@ interface LocalDataRepository {
 
     fun resetGame()
     fun savedState(): ScreenState
+    fun saveState(state: ScreenState)
 }
 
 object LocalData : LocalDataRepository {
@@ -107,9 +108,25 @@ object LocalData : LocalDataRepository {
             bankChips = 0,
             isDrawEnabled = false,
             isActionAvailable = true,
-            isDealAvailable = players.first().isActive && players.count { it.isActive } > 1,
-            isResetAvailable = !isJustReset
+            isDealAvailable = ScreenState.isDealAvailable(players),
+            isResetAvailable = !isJustReset,
+            isCardsOpen = false
         )
+    }
+
+    override fun saveState(state: ScreenState) {
+        player0Name = state.players[0].name
+        player1Name = state.players[1].name
+        player2Name = state.players[2].name
+        player3Name = state.players[3].name
+
+        player0Chips = state.players[0].chips
+        player1Chips = state.players[1].chips
+        player2Chips = state.players[2].chips
+        player3Chips = state.players[3].chips
+
+        isGameStarted = false
+        isJustReset = false
     }
 
     const val DEFAULT_PLAYER_0_NAME = "Me"
