@@ -4,7 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -13,6 +15,8 @@ import kotlinx.coroutines.launch
 class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel() {
     private val _state = MutableStateFlow(localData.savedState())
     val state = _state.asStateFlow()
+    private val _events = MutableSharedFlow<UiEvent>()
+    val events = _events.asSharedFlow()
 
     enum class RoundType {
         PRE_DRAW,
@@ -54,7 +58,9 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     fun onAction(action: ActionType) {
         applyAction(0, action)
-        mainGameLoop()
+        viewModelScope.launch {
+            mainGameLoop()
+        }
     }
 
     fun onDraw() {
@@ -84,18 +90,13 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         _state.update { it.updateAllPlayers { sortCards() } }
     }
 
-    private fun newDeck() {
-        deck.clear()
-        deck.addAll(deckPoker)
-        deck.shuffle()
-    }
-
-    private fun player(index: Int) = _state.value.players[index]
-
-    private fun mainGameLoop() {
+    private suspend fun mainGameLoop() {
         while (true) {
             if (_state.value.players.count { it.isInGame } == 1) {
                 val winIndex = _state.value.players.indexOfFirst { it.isInGame }
+                val mess = "${player(winIndex).name} won and take bank ${_state.value.bankChips} chips"
+                log(mess)
+                _events.emit(UiEvent.ShowToast(mess))
                 _state.update { it.takeBank(winIndex) }
                 localData.saveState(_state.value)
                 _state.update { localData.savedState() }
@@ -116,6 +117,14 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             }
         }
     }
+
+    private fun newDeck() {
+        deck.clear()
+        deck.addAll(deckPoker)
+        deck.shuffle()
+    }
+
+    private fun player(index: Int) = _state.value.players[index]
 
     private fun botBetting(index: Int, availableActions: List<ActionType>): ActionType {
         return availableActions.random()

@@ -2,6 +2,7 @@ package com.example.cardgame
 
 import android.app.Application
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,6 +74,21 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun MainScreen(state: ScreenState) {
+        val context = LocalContext.current
+        LaunchedEffect(Unit) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is UiEvent.ShowToast -> {
+                        Toast.makeText(
+                            context,
+                            event.message,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }
+
         Surface(
             color = colorResource(R.color.backGround),
             modifier = Modifier
