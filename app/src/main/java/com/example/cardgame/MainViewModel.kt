@@ -27,8 +27,8 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     private val deck = mutableListOf<Card>()
     private var currentBet = 0
     private var numOfRaise = 0
-    private var roundType = RoundType.PRE_DRAW
-    private var playerIndex = localData.dealerIndex
+    private var playerIndex = 0
+    private var round = RoundType.PRE_DRAW
 
     init {
         if (localData.isGameStarted) {
@@ -39,19 +39,28 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     fun onResetGame() {
         localData.resetGame()
         _state.update { localData.savedState() }
+        viewModelScope.launch {
+            val mess = "Game was restarted"
+            log(mess)
+            delay(500L)
+            _events.emit(UiEvent.ShowToast(mess))
+        }
     }
 
     fun onDialNext() {
         viewModelScope.launch {
+            _state.update { localData.savedState() }
             localData.isJustReset = false
             localData.isGameStarted = true
+            localData.dealerIndex = nextInGameIndex(localData.dealerIndex)
             _state.update { it.copy(isActionAvailable = false) }
             newDeck()
             dealingCards()
             payAnte()
             currentBet = 0
             numOfRaise = 0
-            roundType = RoundType.PRE_DRAW
+            playerIndex = localData.dealerIndex
+            round = RoundType.PRE_DRAW
             mainGameLoop()
         }
     }
@@ -61,9 +70,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         viewModelScope.launch {
             mainGameLoop()
         }
-    }
-
-    fun onDraw() {
     }
 
     private suspend fun payAnte() {
@@ -93,19 +99,22 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     private suspend fun mainGameLoop() {
         while (true) {
             if (_state.value.players.count { it.isInGame } == 1) {
-                val winIndex = _state.value.players.indexOfFirst { it.isInGame }
-                val mess = "${player(winIndex).name} won and take bank ${_state.value.bankChips} chips"
-                log(mess)
-                _events.emit(UiEvent.ShowToast(mess))
-                _state.update { it.takeBank(winIndex) }
-                localData.saveState(_state.value)
-                _state.update { localData.savedState() }
-                localData.dealerIndex = nextInGameIndex(localData.dealerIndex)
+                gameOver(_state.value.players.indexOfFirst { it.isInGame })
                 return
             }
-            if (_state.value.players.all { it.lastBet.bet == currentBet }) {
-                // end round
+
+            val inGamePlayers = _state.value.players.filter { it.isInGame }
+            val endRound = if (round != RoundType.DRAW) {
+                inGamePlayers.all { it.lastBet.bet == currentBet }
+            } else {
+                inGamePlayers.all { it.lastDraw is ActionType.Draw }
             }
+            if (endRound) {
+                if (endRound()) {
+                    return
+                }
+            }
+
             playerIndex = nextInGameIndex(playerIndex)
             val availableActions = availableActions(playerIndex)
             if (playerIndex == 0) {
@@ -116,6 +125,57 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 applyAction(playerIndex, action)
             }
         }
+    }
+
+    private suspend fun endRound(): Boolean {
+        val newRound = when (round) {
+            RoundType.PRE_DRAW -> {
+                RoundType.DRAW
+            }
+            RoundType.DRAW -> {
+                _state.update {
+                    it.copy(players = it.players.map { player ->
+                        if (player.isInGame) {
+                            player.copy(lastBet = ActionType.NoAction())
+                        } else {
+                            player
+                        }
+                    })
+                }
+                RoundType.POST_DRAW
+            }
+            RoundType.POST_DRAW -> {
+                _state.update { it.copy(isCardsOpen = true) }
+                val combinations = _state.value.players.mapIndexedNotNull { i, playerData ->
+                    if (playerData.isInGame) i to Combination.calcCombination(playerData.cards)
+                    else null
+                }
+                val winCombination = combinations.maxBy { it.second }
+                log("$combinations")
+                log("$winCombination")
+                gameOver(winCombination.first)
+                return true
+            }
+        }
+        playerIndex = localData.dealerIndex
+        round = newRound
+        log("newRound = $round")
+        return false
+    }
+
+    private suspend fun gameOver(winIndex: Int) {
+        val mess = "${player(winIndex).name} won and take bank ${_state.value.bankChips} chips"
+        log(mess)
+        _events.emit(UiEvent.ShowToast(mess))
+        _state.update { it.takeBank(winIndex) }
+        localData.saveState(_state.value)
+        _state.update { it.copy(
+            actionsAvailable = emptyList(),
+            isDrawEnabled = false,
+            isActionAvailable = true,
+            isDealAvailable = true,
+            isResetAvailable = true
+        ) }
     }
 
     private fun newDeck() {
@@ -139,7 +199,11 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             currentBet = action.bet
             _state.update { it.payToBank(index, action.bet) }
         }
-        _state.update { it.updatePlayer(index) { copy(lastBet = action) } }
+        if (action is ActionType.Draw) {
+            _state.update { it.updatePlayer(index) { copy(lastDraw = action) } }
+        } else {
+            _state.update { it.updatePlayer(index) { copy(lastBet = action) } }
+        }
     }
 
     private fun nextInGameIndex(index: Int): Int {
@@ -158,10 +222,10 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     }
 
     private fun availableActions(playerIndex: Int): List<ActionType> {
-        if (roundType == RoundType.DRAW) {
+        if (round == RoundType.DRAW) {
             return listOf(ActionType.Draw())
         }
-        val (betCount, raiseCount) = if (roundType == RoundType.PRE_DRAW) PRE_DRAW_BET to PRE_DRAW_RAISE else POST_DRAW_BET to POST_DRAW_RAISE
+        val (betCount, raiseCount) = if (round == RoundType.PRE_DRAW) PRE_DRAW_BET to PRE_DRAW_RAISE else POST_DRAW_BET to POST_DRAW_RAISE
         val chips = player(playerIndex).chips
         val bets = ArrayList<ActionType>()
         if (currentBet == 0) {
