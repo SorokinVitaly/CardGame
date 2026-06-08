@@ -109,9 +109,14 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.constrainAs(createRef()) { centerTo(parent) }
                     )
                     state.players.forEachIndexed { i, player ->
+                        val isCardsOpen = when {
+                            i==0 -> true
+                            !player.isInGame -> false
+                            else -> state.isCardsOpen
+                        }
                         Player(
                             playerData = player,
-                            isCardsOpen = if (i == 0) true else state.isCardsOpen,
+                            isCardsOpen = isCardsOpen,
                             modifier = Modifier.constrainAs(
                                 createRef(),
                                 playerConstraint(i)
@@ -182,30 +187,6 @@ fun ChipIcon() {
 }
 
 @Composable
-fun Card(
-    card: Card,
-    isCardsOpen: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val assetName = if (isCardsOpen) card.faceAssetName else card.backAssetName
-    Card(
-        border = BorderStroke(width = 1.dp, color = Color.Black),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        shape = RoundedCornerShape(4.dp),
-        modifier = modifier
-            .height(cardHeight)
-            .width(cardWidth)
-    ) {
-        val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
-        AsyncImage(
-            model = assetName,
-            imageLoader = imageLoader,
-            contentDescription = "Card",
-        )
-    }
-}
-
-@Composable
 fun Player(
     playerData: PlayerData,
     isCardsOpen: Boolean,
@@ -246,6 +227,30 @@ fun Player(
             text = playerData.footerText,
             style = MaterialTheme.typography.labelSmall,
             color = Color.LightGray
+        )
+    }
+}
+
+@Composable
+fun Card(
+    card: Card,
+    isCardsOpen: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val assetName = if (isCardsOpen) card.faceAssetName else card.backAssetName
+    Card(
+        border = BorderStroke(width = 1.dp, color = Color.Black),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        shape = RoundedCornerShape(4.dp),
+        modifier = modifier
+            .height(cardHeight)
+            .width(cardWidth)
+    ) {
+        val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
+        AsyncImage(
+            model = assetName,
+            imageLoader = imageLoader,
+            contentDescription = "Card",
         )
     }
 }

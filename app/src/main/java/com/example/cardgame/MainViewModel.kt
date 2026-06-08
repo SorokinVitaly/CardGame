@@ -159,7 +159,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         }
         playerIndex = localData.dealerIndex
         round = newRound
-        log("newRound = $round")
         return false
     }
 
