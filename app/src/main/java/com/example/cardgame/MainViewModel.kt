@@ -61,6 +61,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             numOfRaise = 0
             playerIndex = localData.dealerIndex
             round = RoundType.PRE_DRAW
+            History.clear()
             mainGameLoop()
         }
     }
@@ -98,12 +99,13 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     private suspend fun mainGameLoop() {
         while (true) {
-            if (_state.value.players.count { it.isInGame } == 1) {
+            val inGamePlayers = _state.value.players.filter { it.isInGame }
+
+            if (inGamePlayers.size == 1) {
                 gameOver(_state.value.players.indexOfFirst { it.isInGame })
                 return
             }
 
-            val inGamePlayers = _state.value.players.filter { it.isInGame }
             val endRound = if (round != RoundType.DRAW) {
                 inGamePlayers.all { it.lastBet.bet == currentBet }
             } else {
@@ -151,8 +153,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                     else null
                 }
                 val winCombination = combinations.maxBy { it.second }
-                log("$combinations")
-                log("$winCombination")
                 gameOver(winCombination.first)
                 return true
             }
@@ -191,6 +191,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     private fun applyAction(index: Int, action: ActionType) {
         log("$index: ${action.name}")
+        History.add(index, action)
         if (action is ActionType.Raise) {
             numOfRaise++
         }
