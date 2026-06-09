@@ -73,6 +73,22 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         }
     }
 
+    fun onCardClick(card: Card) {
+        _state.update {
+            it.updatePlayer(0) {
+                copy(
+                    selectedCards = if (card in selectedCards) {
+                        selectedCards - card
+                    } else {
+                        selectedCards + card
+                    }
+                )
+            }
+        }
+
+        log("onCardClick: ${state.value.players[0].selectedCards}")
+    }
+
     private suspend fun payAnte() {
         repeat(4) { index ->
             if (player(index).isActive) {
@@ -132,22 +148,26 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     private suspend fun endRound(): Boolean {
         val newRound = when (round) {
             RoundType.PRE_DRAW -> {
+                _state.update { it.copy(isDrawEnabled = true) }
                 RoundType.DRAW
             }
             RoundType.DRAW -> {
                 _state.update {
-                    it.copy(players = it.players.map { player ->
-                        if (player.isInGame) {
-                            player.copy(lastBet = ActionType.NoAction())
-                        } else {
-                            player
+                    it.copy(
+                        isDrawEnabled = false,
+                        players = it.players.map { player ->
+                            if (player.isInGame) {
+                                player.copy(lastBet = ActionType.NoAction())
+                            } else {
+                                player
+                            }
                         }
-                    })
+                    )
                 }
                 RoundType.POST_DRAW
             }
             RoundType.POST_DRAW -> {
-                _state.update { it.copy(isCardsOpen = true) }
+                _state.update { it.copy(isDrawEnabled = false, isCardsOpen = true) }
                 val combinations = _state.value.players.mapIndexedNotNull { i, playerData ->
                     if (playerData.isInGame) i to Combination.calcCombination(playerData.cards)
                     else null

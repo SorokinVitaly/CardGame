@@ -7,43 +7,29 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstrainScope
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 
 
@@ -114,9 +100,15 @@ class MainActivity : ComponentActivity() {
                             !player.isInGame -> false
                             else -> state.isCardsOpen
                         }
+                        fun onCardClick(card: Card) {
+                            if (state.isDrawEnabled && i == 0) {
+                                viewModel.onCardClick(card)
+                            }
+                        }
                         Player(
                             playerData = player,
                             isCardsOpen = isCardsOpen,
+                            onCardClick = ::onCardClick,
                             modifier = Modifier.constrainAs(
                                 createRef(),
                                 playerConstraint(i)
@@ -161,150 +153,30 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
-}
 
-@Composable
-fun AppButton(text: String, onClick: () -> Unit = {}) {
-    TextButton(
-        onClick = onClick,
-        border = BorderStroke(2.dp, Color.Yellow),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Text(
-            text = text,
-            color = Color.Yellow
-        )
-    }
-}
-
-@Composable
-fun ChipIcon() {
-    Icon(
-        imageVector = ImageVector.vectorResource(R.drawable.poker_chip),
-        tint = Color.Red,
-        contentDescription = "Poker chip"
-    )
-}
-
-@Composable
-fun Player(
-    playerData: PlayerData,
-    isCardsOpen: Boolean,
-    modifier: Modifier = Modifier
-) {
-    if (!playerData.isActive) {
-        return
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Text(
-            text = playerData.name,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White
-        )
-
-        Box {
-            playerData.cards.forEachIndexed { index, card ->
-                Box(modifier = Modifier.padding(start = (index * 20).dp)) {
-                    Card(card, isCardsOpen)
-                }
+    private fun playerConstraint(index: Int): ConstrainScope.() -> Unit = {
+        when (index) {
+            0 -> {
+                centerHorizontallyTo(parent)
+                bottom.linkTo(parent.bottom, margin = 5.dp)
             }
-        }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ChipIcon()
-            Text(
-                text = playerData.chips.toString(),
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White
-            )
-        }
+            1 -> {
+                centerVerticallyTo(parent)
+                absoluteLeft.linkTo(parent.absoluteLeft, margin = 5.dp)
+            }
 
-        Text(
-            text = playerData.footerText,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.LightGray
-        )
-    }
-}
+            2 -> {
+                centerHorizontallyTo(parent)
+                top.linkTo(parent.top, margin = 5.dp)
+            }
 
-@Composable
-fun Card(
-    card: Card,
-    isCardsOpen: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val assetName = if (isCardsOpen) card.faceAssetName else card.backAssetName
-    Card(
-        border = BorderStroke(width = 1.dp, color = Color.Black),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        shape = RoundedCornerShape(4.dp),
-        modifier = modifier
-            .height(cardHeight)
-            .width(cardWidth)
-    ) {
-        val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
-        AsyncImage(
-            model = assetName,
-            imageLoader = imageLoader,
-            contentDescription = "Card",
-        )
-    }
-}
+            3 -> {
+                centerVerticallyTo(parent)
+                absoluteRight.linkTo(parent.absoluteRight, margin = 5.dp)
+            }
 
-@Composable
-fun Bank(
-    bankChips: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Text(
-            text = "Bank",
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ChipIcon()
-            Text(
-                text = bankChips.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
-            )
+            else -> throw IllegalArgumentException("Invalid player index: $index")
         }
     }
 }
-
-private fun playerConstraint(index: Int): ConstrainScope.() -> Unit = {
-    when (index) {
-        0 -> {
-            centerHorizontallyTo(parent)
-            bottom.linkTo(parent.bottom, margin = 5.dp)
-        }
-
-        1 -> {
-            centerVerticallyTo(parent)
-            absoluteLeft.linkTo(parent.absoluteLeft, margin = 5.dp)
-        }
-
-        2 -> {
-            centerHorizontallyTo(parent)
-            top.linkTo(parent.top, margin = 5.dp)
-        }
-
-        3 -> {
-            centerVerticallyTo(parent)
-            absoluteRight.linkTo(parent.absoluteRight, margin = 5.dp)
-        }
-
-        else -> throw IllegalArgumentException("Invalid player index: $index")
-    }
-}
-
-val cardHeight = 88.dp
-val cardWidth = 63.dp

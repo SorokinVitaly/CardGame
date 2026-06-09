@@ -4,6 +4,7 @@ package com.example.cardgame
 data class PlayerData(
     val name: String,
     val cards: List<Card> = emptyList(),
+    val selectedCards: Set<Card> = emptySet(),
     val chips: Int = 0,
     val isActive: Boolean,
     val lastDraw: ActionType = ActionType.NoAction(),
@@ -17,7 +18,7 @@ data class PlayerData(
     } + lastBet.name
 
     fun payChips(payed: Int) = copy(chips = chips - payed)
-    fun clearCards() = copy(cards = emptyList())
+    fun clearCards() = copy(cards = emptyList(), selectedCards = emptySet())
     fun sortCards() = copy(cards = cards.sorted())
     fun addCard(card: Card) = copy(cards = cards + card)
     //fun removeCard(card: Card) = copy(cards = cards - card)
