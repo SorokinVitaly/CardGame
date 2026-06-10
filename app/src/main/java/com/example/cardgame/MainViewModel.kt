@@ -149,6 +149,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         val newRound = when (round) {
             RoundType.PRE_DRAW -> {
                 _state.update { it.copy(isDrawEnabled = true) }
+                _events.emit(UiEvent.ShowToast("Please choose cards to draw"))
                 RoundType.DRAW
             }
             RoundType.DRAW -> {
@@ -211,7 +212,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     private fun applyAction(index: Int, action: ActionType) {
         log("$index: ${action.name}")
-        History.add(index, action)
         if (action is ActionType.Raise) {
             numOfRaise++
         }
@@ -220,8 +220,32 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             _state.update { it.payToBank(index, action.bet) }
         }
         if (action is ActionType.Draw) {
-            _state.update { it.updatePlayer(index) { copy(lastDraw = action) } }
+            val selected = _state.value.players[index].selectedCards
+            val newAction = ActionType.Draw(selected.size)
+            if (selected.isNotEmpty()) {
+                viewModelScope.launch {
+
+                    selected.forEach { card ->
+                        _state.update { it.updatePlayer(index) { removeCard(card) } }
+                        delay(300L)
+                    }
+
+                    delay(500L)
+
+                    selected.forEach { card ->
+                        delay(300L)
+                        val newCard = deck.removeAt(deck.lastIndex)
+                        _state.update { it.updatePlayer(index) { addCard(newCard) } }
+                    }
+
+                    _state.update { it.updatePlayer(index) { sortCards() }}
+                    _state.update { it.updatePlayer(index) { clearSelected() }}
+                }
+            }
+            History.add(index, newAction)
+            _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
         } else {
+            History.add(index, action)
             _state.update { it.updatePlayer(index) { copy(lastBet = action) } }
         }
     }

@@ -19,8 +19,8 @@ data class PlayerData(
 
     fun payChips(payed: Int) = copy(chips = chips - payed)
     fun clearCards() = copy(cards = emptyList(), selectedCards = emptySet())
+    fun clearSelected() = copy(selectedCards = emptySet())
     fun sortCards() = copy(cards = cards.sorted())
     fun addCard(card: Card) = copy(cards = cards + card)
-    //fun removeCard(card: Card) = copy(cards = cards - card)
-    //fun changeCard(oldCard: Card, newCard: Card) = copy(cards = cards - oldCard + newCard)
+    fun removeCard(card: Card) = copy(cards = cards - card)
 }
