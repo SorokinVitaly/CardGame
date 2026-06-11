@@ -6,4 +6,6 @@ object History {
     fun clear() = list.clear()
 
     fun add(index: Int, action :ActionType) = list.add(index to action)
+
+    fun isAggressiveTable(): Boolean = list.count { it.second is ActionType.Raise } > 1
 }

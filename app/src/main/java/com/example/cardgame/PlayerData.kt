@@ -23,4 +23,5 @@ data class PlayerData(
     fun sortCards() = copy(cards = cards.sorted())
     fun addCard(card: Card) = copy(cards = cards + card)
     fun removeCard(card: Card) = copy(cards = cards - card)
+    fun setSelected(cardsForDraw: List<Card>) = copy(selectedCards = cardsForDraw.toSet())
 }

@@ -1,0 +1,111 @@
+package com.example.cardgame
+
+fun calcPreDrawCombination(cards: List<Card>): PreDrawCombination {
+    require(cards.size == 5)
+    val combination = calcCombination(cards)
+    if (combination.type >= CombinationType.STRAIGHT) {
+        return PreDrawCombination(combination)
+    }
+    if (combination.type == CombinationType.THREE_OF_A_KIND) {
+        return PreDrawCombination(
+            combination,
+            cardsForDraw = cards.filter { it.rank != combination.highCard.rank }
+        )
+    }
+    if (combination.type == CombinationType.TWO_PAIRS) {
+        val keep = setOf(cards[1].rank, combination.highCard.rank)
+        return PreDrawCombination(
+            combination,
+            cardsForDraw = cards.filter { it.rank !in keep }
+        )
+    }
+    findFourToFlush(cards)?.let {
+        return PreDrawCombination(
+            combination,
+            IncompleteCombinationType.FOUR_TO_FLUSH,
+            cardsForDraw = it
+        )
+    }
+    findFourToStraightOpen(cards)?.let {
+        return PreDrawCombination(
+            combination,
+            IncompleteCombinationType.FOUR_TO_STRAIGHT_OPEN,
+            cardsForDraw = it
+        )
+    }
+    if (combination.type == CombinationType.PAIR) {
+        val kicker = cards.last { it.rank != combination.highCard.rank }
+        val list = if (kicker.rank >= CardRank.JACK && History.isAggressiveTable()) {
+            cards.filter { it != kicker && it.rank != combination.highCard.rank }
+        } else {
+            cards.filter { it.rank != combination.highCard.rank }
+        }
+        return PreDrawCombination(
+            combination,
+            cardsForDraw = list
+        )
+    }
+    findFourToStraight(cards)?.let {
+        return PreDrawCombination(
+            combination,
+            IncompleteCombinationType.FOUR_TO_STRAIGHT,
+            cardsForDraw = it
+        )
+    }
+    findThreeToStraightFlush(cards)?.let {
+        return PreDrawCombination(
+            combination,
+            IncompleteCombinationType.THREE_TO_STRAIGHT_FLUSH,
+            cardsForDraw = it
+        )
+    }
+    val numCards = if (cards[3].rank >= CardRank.JACK) 3 else 4
+    return PreDrawCombination(
+        combination,
+        cardsForDraw = cards.take(numCards)
+    )
+}
+
+// Functions to find incomplete combination. Return set of cards to draw or null
+private fun findFourToFlush(cards: List<Card>): List<Card>? {
+    val sameSuitCards = findSameSuit(cards, 4) ?: return null
+    return cards - sameSuitCards
+}
+
+private fun findFourToStraightOpen(cards: List<Card>): List<Card>? {
+    for (skip in cards) {
+        val remaining = cards.filter { it != skip }
+        val firstCard = remaining[0]
+        val ordinalList = remaining.map { it.rank.ordinal - firstCard.rank.ordinal }
+        if (ordinalList == listOf(0, 1, 2, 3) && remaining[3].rank != CardRank.ACE) {
+            return listOf(skip)
+        }
+    }
+    return null
+}
+
+private fun findFourToStraight(cards: List<Card>): List<Card>? {
+    for (skip in cards) {
+        val remaining = cards.filter { it != skip }
+        if (remaining[3].rank.ordinal - remaining[0].rank.ordinal <= 4) return listOf(skip)
+        if (remaining[3].rank == CardRank.ACE && remaining[2].rank <= CardRank.FIVE) return listOf(skip)
+    }
+    return null
+}
+
+private fun findThreeToStraightFlush(cards: List<Card>): List<Card>? {
+    val sameSuitCards = findSameSuit(cards, 3) ?: return null
+    return if (sameSuitCards[2].rank.ordinal - sameSuitCards[0].rank.ordinal > 4) null
+    else cards - sameSuitCards
+}
+
+private fun findSameSuit(cards: List<Card>, numCards: Int ): List<Card>? {
+    val maxIndex = 5 - numCards + 1
+    for (i in 0..maxIndex) {
+        val testList = cards.filter { it.suit == cards[i].suit }
+        if (testList.size == numCards) {
+            return testList
+        }
+    }
+    return null
+}

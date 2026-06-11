@@ -29,6 +29,9 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     private var numOfRaise = 0
     private var playerIndex = 0
     private var round = RoundType.PRE_DRAW
+    private val preDrawCombinations = arrayOfNulls<PreDrawCombination?>(4)
+    private val postDrawCombinations = arrayOfNulls<Combination?>(4)
+
 
     init {
         if (localData.isGameStarted) {
@@ -67,8 +70,8 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     }
 
     fun onAction(action: ActionType) {
-        applyAction(0, action)
         viewModelScope.launch {
+            applyAction(0, action)
             mainGameLoop()
         }
     }
@@ -85,8 +88,6 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 )
             }
         }
-
-        log("onCardClick: ${state.value.players[0].selectedCards}")
     }
 
     private suspend fun payAnte() {
@@ -111,6 +112,12 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         }
         delay(500L)
         _state.update { it.updateAllPlayers { sortCards() } }
+
+        repeat(4) { index ->
+            if (player(index).isActive) {
+                preDrawCombinations[index] = calcPreDrawCombination(player(index).cards)
+            }
+        }
     }
 
     private suspend fun mainGameLoop() {
@@ -165,12 +172,21 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                         }
                     )
                 }
+                repeat(4) { index ->
+                    if (player(index).isInGame) {
+                        postDrawCombinations[index] = calcCombination(player(index).cards)
+                    }
+                }
                 RoundType.POST_DRAW
             }
             RoundType.POST_DRAW -> {
                 _state.update { it.copy(isDrawEnabled = false, isCardsOpen = true) }
                 val combinations = _state.value.players.mapIndexedNotNull { i, playerData ->
-                    if (playerData.isInGame) i to Combination.calcCombination(playerData.cards)
+                    if (playerData.isInGame) {
+                        val combination = postDrawCombinations[i]
+                        requireNotNull(combination)
+                        i to combination
+                    }
                     else null
                 }
                 val winCombination = combinations.maxBy { it.second }
@@ -198,19 +214,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         ) }
     }
 
-    private fun newDeck() {
-        deck.clear()
-        deck.addAll(deckPoker)
-        deck.shuffle()
-    }
-
-    private fun player(index: Int) = _state.value.players[index]
-
-    private fun botBetting(index: Int, availableActions: List<ActionType>): ActionType {
-        return availableActions.random()
-    }
-
-    private fun applyAction(index: Int, action: ActionType) {
+    private suspend fun applyAction(index: Int, action: ActionType) {
         log("$index: ${action.name}")
         if (action is ActionType.Raise) {
             numOfRaise++
@@ -223,30 +227,44 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             val selected = _state.value.players[index].selectedCards
             val newAction = ActionType.Draw(selected.size)
             if (selected.isNotEmpty()) {
-                viewModelScope.launch {
-
-                    selected.forEach { card ->
-                        _state.update { it.updatePlayer(index) { removeCard(card) } }
-                        delay(300L)
-                    }
-
-                    delay(500L)
-
-                    selected.forEach { card ->
-                        delay(300L)
-                        val newCard = deck.removeAt(deck.lastIndex)
-                        _state.update { it.updatePlayer(index) { addCard(newCard) } }
-                    }
-
-                    _state.update { it.updatePlayer(index) { sortCards() }}
-                    _state.update { it.updatePlayer(index) { clearSelected() }}
+                selected.forEach { card ->
+                    _state.update { it.updatePlayer(index) { removeCard(card) } }
+                    delay(300L)
                 }
+                delay(500L)
+                selected.forEach { card ->
+                    delay(300L)
+                    val newCard = deck.removeAt(deck.lastIndex)
+                    _state.update { it.updatePlayer(index) { addCard(newCard) } }
+                }
+                _state.update { it.updatePlayer(index) { sortCards() } }
+                _state.update { it.updatePlayer(index) { clearSelected() } }
             }
             History.add(index, newAction)
             _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
         } else {
             History.add(index, action)
             _state.update { it.updatePlayer(index) { copy(lastBet = action) } }
+        }
+    }
+
+    private fun newDeck() {
+        deck.clear()
+        deck.addAll(deckPoker)
+        deck.shuffle()
+    }
+
+    private fun player(index: Int) = _state.value.players[index]
+
+    private fun botBetting(index: Int, availableActions: List<ActionType>): ActionType {
+        val firstAction = availableActions.first()
+        return if (firstAction is ActionType.Draw) {
+            val combination = preDrawCombinations[index]
+            requireNotNull(combination)
+            _state.update { it.updatePlayer(index) { setSelected(combination.cardsForDraw) } }
+            firstAction
+        } else {
+            availableActions.random()
         }
     }
 
