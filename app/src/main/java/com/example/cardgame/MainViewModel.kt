@@ -29,9 +29,8 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
     private var numOfRaise = 0
     private var playerIndex = 0
     private var round = RoundType.PRE_DRAW
-    private val preDrawCombinations = arrayOfNulls<PreDrawCombination?>(4)
-    private val postDrawCombinations = arrayOfNulls<Combination?>(4)
-
+    private val preDrawCombinations = arrayOfNulls<DrawCombination?>(4)
+    private val postDrawCombinations = arrayOfNulls<DrawCombination?>(4)
 
     init {
         if (localData.isGameStarted) {
@@ -174,7 +173,9 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 }
                 repeat(4) { index ->
                     if (player(index).isInGame) {
-                        postDrawCombinations[index] = calcCombination(player(index).cards)
+                        postDrawCombinations[index] = DrawCombination(
+                            onHandCombination = calcCombination(player(index).cards)
+                        )
                     }
                 }
                 RoundType.POST_DRAW
@@ -189,7 +190,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                     }
                     else null
                 }
-                val winCombination = combinations.maxBy { it.second }
+                val winCombination = combinations.maxBy { it.second.onHandCombination }
                 gameOver(winCombination.first)
                 return true
             }
@@ -264,7 +265,29 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             _state.update { it.updatePlayer(index) { setSelected(combination.cardsForDraw) } }
             firstAction
         } else {
-            availableActions.random()
+            val isPreDraw = round == RoundType.PRE_DRAW
+            val combination = if (isPreDraw) preDrawCombinations[index] else postDrawCombinations[index]
+            requireNotNull(combination)
+            val strength = calcHandStrength(combination, isPreDraw)
+            val playerCount = _state.value.players.count { it.isActive }
+            val positionFromDealer = (index - localData.dealerIndex - 1 + playerCount) % playerCount
+            val isLatePosition = positionFromDealer >= 2
+            val isFacingBet = currentBet > 0
+
+            val potOdds: Float = currentBet.toFloat() / (_state.value.bankChips + currentBet).toFloat()
+            val drawProbability = if (isPreDraw) drawOdds[combination.incompleteCombination] else 0f
+            requireNotNull(drawProbability)
+            val drawIsWorthIt = drawProbability > 0f && potOdds <= drawProbability
+
+            val strategy = selectBotStrategy(
+                strength,
+                numOfRaise,
+                isLatePosition,
+                drawIsWorthIt,
+                isFacingBet,
+                isPreDraw
+            )
+            resolveAction(strategy, availableActions)
         }
     }
 
@@ -305,6 +328,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             }
             bets.add(ActionType.Fold())
         }
+        require(bets.isNotEmpty())
         return bets
     }
 
@@ -317,5 +341,13 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
         const val POST_DRAW_BET = 2
         const val POST_DRAW_RAISE = 2
         const val MAX_NUM_OF_RAISE = 3
+
+        val drawOdds = mapOf(
+            IncompleteCombinationType.FOUR_TO_FLUSH to 0.19f,
+            IncompleteCombinationType.FOUR_TO_STRAIGHT_OPEN to 0.17f,
+            IncompleteCombinationType.FOUR_TO_STRAIGHT to 0.09f,
+            IncompleteCombinationType.THREE_TO_STRAIGHT_FLUSH to 0.12f,
+            IncompleteCombinationType.NO_INCOMPLETE to 0f
+        )
     }
 }

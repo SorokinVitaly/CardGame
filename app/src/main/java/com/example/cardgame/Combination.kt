@@ -29,7 +29,7 @@ data class Combination(
         compareValuesBy(this, other, { it.type }, { it.highCard })
 }
 
-class PreDrawCombination(
+class DrawCombination(
     val onHandCombination: Combination,
     val incompleteCombination: IncompleteCombinationType = IncompleteCombinationType.NO_INCOMPLETE,
     val cardsForDraw: List<Card> = emptyList()

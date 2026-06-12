@@ -1,33 +1,33 @@
 package com.example.cardgame
 
-fun calcPreDrawCombination(cards: List<Card>): PreDrawCombination {
+fun calcPreDrawCombination(cards: List<Card>): DrawCombination {
     require(cards.size == 5)
     val combination = calcCombination(cards)
     if (combination.type >= CombinationType.STRAIGHT) {
-        return PreDrawCombination(combination)
+        return DrawCombination(combination)
     }
     if (combination.type == CombinationType.THREE_OF_A_KIND) {
-        return PreDrawCombination(
+        return DrawCombination(
             combination,
             cardsForDraw = cards.filter { it.rank != combination.highCard.rank }
         )
     }
     if (combination.type == CombinationType.TWO_PAIRS) {
         val keep = setOf(cards[1].rank, combination.highCard.rank)
-        return PreDrawCombination(
+        return DrawCombination(
             combination,
             cardsForDraw = cards.filter { it.rank !in keep }
         )
     }
     findFourToFlush(cards)?.let {
-        return PreDrawCombination(
+        return DrawCombination(
             combination,
             IncompleteCombinationType.FOUR_TO_FLUSH,
             cardsForDraw = it
         )
     }
     findFourToStraightOpen(cards)?.let {
-        return PreDrawCombination(
+        return DrawCombination(
             combination,
             IncompleteCombinationType.FOUR_TO_STRAIGHT_OPEN,
             cardsForDraw = it
@@ -40,27 +40,27 @@ fun calcPreDrawCombination(cards: List<Card>): PreDrawCombination {
         } else {
             cards.filter { it.rank != combination.highCard.rank }
         }
-        return PreDrawCombination(
+        return DrawCombination(
             combination,
             cardsForDraw = list
         )
     }
     findFourToStraight(cards)?.let {
-        return PreDrawCombination(
+        return DrawCombination(
             combination,
             IncompleteCombinationType.FOUR_TO_STRAIGHT,
             cardsForDraw = it
         )
     }
     findThreeToStraightFlush(cards)?.let {
-        return PreDrawCombination(
+        return DrawCombination(
             combination,
             IncompleteCombinationType.THREE_TO_STRAIGHT_FLUSH,
             cardsForDraw = it
         )
     }
     val numCards = if (cards[3].rank >= CardRank.JACK) 3 else 4
-    return PreDrawCombination(
+    return DrawCombination(
         combination,
         cardsForDraw = cards.take(numCards)
     )
