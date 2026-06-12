@@ -50,6 +50,9 @@ data class Card(
         return "$prefix${suit.name}-$rankName$postfix"
     }
 
+    override fun toString(): String =
+        "${rank.name}-${suit.name}"
+
     override fun compareTo(other: Card): Int =
         compareValuesBy(this, other, { it.rank }, { it.suit })
 }

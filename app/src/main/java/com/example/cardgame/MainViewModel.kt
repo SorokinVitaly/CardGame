@@ -69,6 +69,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     fun onAction(action: ActionType) {
         viewModelScope.launch {
+            _state.update { it.copy(isActionAvailable = false) }
             applyAction(0, action)
             mainGameLoop()
         }
@@ -220,7 +221,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
     private suspend fun gameOver(winIndex: Int) {
         val mess = "${player(winIndex).name} won and take bank ${_state.value.bankChips} chips"
-        log(mess +" ${combinations[winIndex]}")
+        log(mess)
         _events.emit(UiEvent.ShowToast(mess))
         _state.update { it.takeBank(winIndex) }
         localData.saveState(_state.value)
@@ -304,7 +305,10 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 isFacingBet,
                 isPreDraw
             )
-            resolveAction(strategy, availableActions)
+            val action = resolveAction(strategy, availableActions)
+
+            log("botBetting: $index -> ${player(index).cards} $strength $strategy ${action.name}")
+            action
         }
     }
 
