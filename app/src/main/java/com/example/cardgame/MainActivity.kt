@@ -1,6 +1,5 @@
 package com.example.cardgame
 
-import android.app.Application
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -29,22 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstrainScope
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.ImageLoader
-import coil.decode.SvgDecoder
 
-
-class App : Application() {
-    val imageLoader by lazy {
-        ImageLoader.Builder(this)
-            .components { add(SvgDecoder.Factory()) }
-            .build()
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        ApplicationResourceManager.init(this)
-    }
-}
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()

@@ -108,7 +108,7 @@ fun Card(
             .width(cardWidth)
             .clickable(onClick = onClick)
     ) {
-        val imageLoader = (LocalContext.current.applicationContext as App).imageLoader
+        val imageLoader = (LocalContext.current.applicationContext as MainApp).imageLoader
         AsyncImage(
             model = assetName,
             imageLoader = imageLoader,
