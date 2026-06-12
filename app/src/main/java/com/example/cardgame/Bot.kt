@@ -1,9 +1,9 @@
 package com.example.cardgame
 
 enum class BettingStrategy {
-    AGGRESSIVE,
+    DROP,
     PASSIVE,
-    DROP
+    AGGRESSIVE
 }
 
 fun selectBotStrategy(
@@ -49,18 +49,13 @@ fun resolveAction(
     strategy: BettingStrategy,
     availableActions: List<ActionType>,
 ): ActionType {
-    when (strategy) {
-        BettingStrategy.AGGRESSIVE -> {
-            availableActions.find { it is ActionType.Raise }?.let { return it }
-            availableActions.find { it is ActionType.Bet   }?.let { return it }
-            availableActions.find { it is ActionType.Call  }?.let { return it }
-            availableActions.find { it is ActionType.Check }?.let { return it }
-        }
-        BettingStrategy.PASSIVE -> {
-            availableActions.find { it is ActionType.Check }?.let { return it }
-            availableActions.find { it is ActionType.Call  }?.let { return it }
-        }
-        BettingStrategy.DROP -> {}
+    if (strategy == BettingStrategy.AGGRESSIVE) {
+        availableActions.find { it is ActionType.Raise }?.let { return it }
+        availableActions.find { it is ActionType.Bet   }?.let { return it }
     }
+    if (strategy >= BettingStrategy.PASSIVE) {
+        availableActions.find { it is ActionType.Call  }?.let { return it }
+    }
+    availableActions.find { it is ActionType.Check }?.let { return it }
     return ActionType.Fold()
 }
