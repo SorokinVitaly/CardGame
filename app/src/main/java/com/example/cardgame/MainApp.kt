@@ -17,4 +17,3 @@ class MainApp : Application() {
         ApplicationResourceManager.init(this)
     }
 }
-
