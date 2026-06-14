@@ -1,5 +1,6 @@
 package com.example.cardgame
 
+import android.content.SharedPreferences
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -24,7 +25,10 @@ interface LocalDataRepository {
     fun saveState(state: ScreenState)
 }
 
-class LocalDataRepositoryImpl @Inject constructor(): LocalDataRepository {
+class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPreferences) :
+    LocalDataRepository,
+    PrefsOwner
+{
     override var player0Name: String by PreferencesDelegate(
         ::player0Name.name,
         DEFAULT_PLAYER_0_NAME

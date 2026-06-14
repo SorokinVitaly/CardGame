@@ -13,9 +13,4 @@ class MainApp : Application() {
             .components { add(SvgDecoder.Factory()) }
             .build()
     }
-
-    override fun onCreate() {
-        super.onCreate()
-        ApplicationResourceManager.init(this)
-    }
 }

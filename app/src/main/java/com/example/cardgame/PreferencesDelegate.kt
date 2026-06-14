@@ -1,25 +1,19 @@
 package com.example.cardgame
 
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-object SharedPreferencesManager {
-    val prefs: SharedPreferences by lazy {
-        ApplicationResourceManager.appContext.getSharedPreferences(
-            SHARED_PREFERENCES_NAME,
-            MODE_PRIVATE
-        )
-    }
-    const val SHARED_PREFERENCES_NAME = "Preferences"
+
+interface PrefsOwner {
+    val prefs: SharedPreferences
 }
 
-class PreferencesDelegate<T>(val keyName: String, val defaultValue: T) : ReadWriteProperty<Any?, T> {
+class PreferencesDelegate<T>(val keyName: String, val defaultValue: T) : ReadWriteProperty<PrefsOwner, T> {
     @Suppress("UNCHECKED_CAST")
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T =
-        with(SharedPreferencesManager.prefs) {
+    override fun getValue(thisRef: PrefsOwner, property: KProperty<*>): T =
+        with(thisRef.prefs) {
             when (defaultValue) {
                 is Boolean -> getBoolean(keyName, defaultValue)
                 is Int -> getInt(keyName, defaultValue)
@@ -30,8 +24,8 @@ class PreferencesDelegate<T>(val keyName: String, val defaultValue: T) : ReadWri
             }
         } as T
 
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        SharedPreferencesManager.prefs.edit {
+    override fun setValue(thisRef: PrefsOwner, property: KProperty<*>, value: T) {
+        thisRef.prefs.edit {
             when (value) {
                 is Boolean -> putBoolean(keyName, value)
                 is Int -> putInt(keyName, value)
