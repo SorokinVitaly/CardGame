@@ -1,5 +1,6 @@
 package com.example.cardgame
 
+import javax.inject.Inject
 import kotlin.random.Random
 
 
@@ -23,7 +24,7 @@ interface LocalDataRepository {
     fun saveState(state: ScreenState)
 }
 
-object LocalData : LocalDataRepository {
+class LocalDataRepositoryImpl @Inject constructor(): LocalDataRepository {
     override var player0Name: String by PreferencesDelegate(
         ::player0Name.name,
         DEFAULT_PLAYER_0_NAME
@@ -129,9 +130,11 @@ object LocalData : LocalDataRepository {
         isJustReset = false
     }
 
-    const val DEFAULT_PLAYER_0_NAME = "Me"
-    const val DEFAULT_PLAYER_1_NAME = "Lesley Colon"
-    const val DEFAULT_PLAYER_2_NAME = "Leon Kim"
-    const val DEFAULT_PLAYER_3_NAME = "Vanessa May"
-    const val DEFAULT_CHIP_NUMBER = 1000
+    companion object {
+        const val DEFAULT_PLAYER_0_NAME = "Me"
+        const val DEFAULT_PLAYER_1_NAME = "Lesley Colon"
+        const val DEFAULT_PLAYER_2_NAME = "Leon Kim"
+        const val DEFAULT_PLAYER_3_NAME = "Vanessa May"
+        const val DEFAULT_CHIP_NUMBER = 1000
+    }
 }

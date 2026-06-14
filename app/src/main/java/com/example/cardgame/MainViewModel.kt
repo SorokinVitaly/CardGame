@@ -3,6 +3,7 @@ package com.example.cardgame
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,9 +11,14 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
-class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel() {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val localData: LocalDataRepository,
+    private val history: History
+) : ViewModel() {
     private val _state = MutableStateFlow(localData.savedState())
     val state = _state.asStateFlow()
     private val _events = MutableSharedFlow<UiEvent>()
@@ -62,7 +68,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
             numOfRaise = 0
             playerIndex = localData.dealerIndex
             round = RoundType.PRE_DRAW
-            History.clear()
+            history.clear()
             mainGameLoop()
         }
     }
@@ -111,7 +117,7 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
 
         repeat(4) { index ->
             if (player(index).isActive) {
-                combinations[index] = calcPreDrawCombination(player(index).cards)
+                combinations[index] = calcPreDrawCombination(history, player(index).cards)
             }
         }
     }
@@ -338,10 +344,10 @@ class MainViewModel(val localData: LocalDataRepository = LocalData) : ViewModel(
                 _state.update { it.updatePlayer(index) { sortCards() } }
                 _state.update { it.updatePlayer(index) { clearSelected() } }
             }
-            History.add(index, newAction)
+            history.add(index, newAction)
             _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
         } else {
-            History.add(index, action)
+            history.add(index, action)
             _state.update { it.updatePlayer(index) { copy(lastBet = action) } }
         }
     }

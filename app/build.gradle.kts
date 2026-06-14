@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    ksp(libs.kotlin.metadata.jvm)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

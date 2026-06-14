@@ -1,6 +1,6 @@
 package com.example.cardgame
 
-fun calcPreDrawCombination(cards: List<Card>): DrawCombination {
+fun calcPreDrawCombination(history: History, cards: List<Card>): DrawCombination {
     require(cards.size == 5)
     val combination = calcCombination(cards)
     if (combination.type >= CombinationType.STRAIGHT) {
@@ -35,7 +35,7 @@ fun calcPreDrawCombination(cards: List<Card>): DrawCombination {
     }
     if (combination.type == CombinationType.PAIR) {
         val kicker = cards.last { it.rank != combination.highCard.rank }
-        val list = if (kicker.rank >= CardRank.JACK && History.isAggressiveTable()) {
+        val list = if (kicker.rank >= CardRank.JACK && history.isAggressiveTable()) {
             cards.filter { it != kicker && it.rank != combination.highCard.rank }
         } else {
             cards.filter { it.rank != combination.highCard.rank }
