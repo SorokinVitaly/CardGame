@@ -7,6 +7,7 @@ data class PlayerData(
     val selectedCards: Set<Card> = emptySet(),
     val chips: Int = 0,
     val isActive: Boolean,
+    val isDialer: Boolean = false,
     val lastDraw: ActionType = ActionType.NoAction(),
     val lastBet: ActionType = ActionType.NoAction()
 ) {
@@ -24,4 +25,5 @@ data class PlayerData(
     fun addCard(card: Card) = copy(cards = cards + card)
     fun removeCard(card: Card) = copy(cards = cards - card)
     fun setSelected(cardsForDraw: List<Card>) = copy(selectedCards = cardsForDraw.toSet())
+    fun setDialer() = copy(isDialer = true)
 }

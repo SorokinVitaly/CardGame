@@ -2,6 +2,8 @@ package com.example.cardgame
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +30,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
 
@@ -71,6 +76,9 @@ fun Player(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
+            if (playerData.isDialer) {
+                DealerButton()
+            }
             ChipIcon()
             Text(
                 text = playerData.chips.toString(),
@@ -132,11 +140,29 @@ fun AppButton(text: String, onClick: () -> Unit = {}) {
 }
 
 @Composable
+fun DealerButton() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(24.dp)
+            .border(width = 2.dp, color = Color.Black, shape = CircleShape)
+            .background(color = Color.White, shape = CircleShape)
+    ) {
+        Text(
+            text = "DEALER",
+            color = Color.Black,
+            fontSize = 5.sp
+        )
+    }
+}
+
+@Composable
 fun ChipIcon() {
     Icon(
         imageVector = ImageVector.vectorResource(R.drawable.poker_chip),
         tint = Color.Red,
-        contentDescription = "Poker chip"
+        contentDescription = "Poker chip",
+        modifier = Modifier.size(24.dp)
     )
 }
 

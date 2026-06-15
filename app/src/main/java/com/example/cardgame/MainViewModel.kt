@@ -44,9 +44,9 @@ class MainViewModel @Inject constructor(
     }
 
     fun onResetGame() {
-        localData.resetGame()
-        _state.update { localData.savedState() }
         viewModelScope.launch {
+            localData.resetGame()
+            _state.update { localData.savedState() }
             val mess = "Game was restarted"
             log(mess)
             delay(500L)
@@ -59,14 +59,16 @@ class MainViewModel @Inject constructor(
             _state.update { localData.savedState() }
             localData.isJustReset = false
             localData.isGameStarted = true
-            localData.dealerIndex = nextInGameIndex(localData.dealerIndex)
+            val dealerIndex = nextInGameIndex(localData.dealerIndex)
+            localData.dealerIndex = dealerIndex
             _state.update { it.copy(isActionAvailable = false) }
+            _state.update { it.updatePlayer(dealerIndex) { setDialer() } }
             newDeck()
             dealingCards()
             payAnte()
             currentBet = 0
             numOfRaise = 0
-            playerIndex = localData.dealerIndex
+            playerIndex = dealerIndex
             round = RoundType.PRE_DRAW
             history.clear()
             mainGameLoop()
@@ -75,7 +77,7 @@ class MainViewModel @Inject constructor(
 
     fun onAction(action: ActionType) {
         viewModelScope.launch {
-            _state.update { it.copy(isActionAvailable = false) }
+            _state.update { it.copy(isActionAvailable = false, isDrawEnabled = false) }
             applyAction(0, action)
             mainGameLoop()
         }
@@ -153,6 +155,10 @@ class MainViewModel @Inject constructor(
             playerIndex = nextInGameIndex(playerIndex)
             val availableActions = availableActions(playerIndex)
             if (playerIndex == 0) {
+                if (round == RoundType.DRAW) {
+                    _state.update { it.copy(isDrawEnabled = true) }
+                    _events.emit(UiEvent.ShowToast("Please choose cards to draw"))
+                }
                 _state.update { it.copy(isActionAvailable = true, actionsAvailable = availableActions) }
                 return
             } else {
@@ -165,7 +171,6 @@ class MainViewModel @Inject constructor(
     private suspend fun endRound(): Boolean {
         val newRound = when (round) {
             RoundType.PRE_DRAW -> {
-                endPreDrawRound()
                 RoundType.DRAW
             }
             RoundType.DRAW -> {
@@ -182,15 +187,9 @@ class MainViewModel @Inject constructor(
         return false
     }
 
-    private suspend fun endPreDrawRound() {
-        _state.update { it.copy(isDrawEnabled = true) }
-        _events.emit(UiEvent.ShowToast("Please choose cards to draw"))
-    }
-
     private fun endDrawRound() {
         _state.update {
             it.copy(
-                isDrawEnabled = false,
                 players = it.players.map { player ->
                     if (player.isInGame) {
                         player.copy(lastBet = ActionType.NoAction())
@@ -210,7 +209,7 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun endPostDrawRound() {
-        _state.update { it.copy(isDrawEnabled = false, isCardsOpen = true) }
+        _state.update { it.copy(isCardsOpen = true) }
         val inGameCombinations = _state.value.players.mapIndexedNotNull { i, playerData ->
             if (playerData.isInGame) {
                 val combination = combinations[i]
@@ -312,7 +311,6 @@ class MainViewModel @Inject constructor(
                 isPreDraw
             )
             val action = resolveAction(strategy, availableActions)
-
             log("botBetting: $index -> ${player(index).cards} $strength $strategy ${action.name}")
             action
         }
@@ -322,10 +320,6 @@ class MainViewModel @Inject constructor(
         log("$index: ${action.name}")
         if (action is ActionType.Raise) {
             numOfRaise++
-        }
-        if (action.bet > 0) {
-            currentBet = action.bet
-            _state.update { it.payToBank(index, action.bet) }
         }
         if (action is ActionType.Draw) {
             val selected = _state.value.players[index].selectedCards
@@ -337,16 +331,19 @@ class MainViewModel @Inject constructor(
                 }
                 delay(500L)
                 selected.forEach { card ->
-                    delay(300L)
                     val newCard = deck.removeAt(deck.lastIndex)
                     _state.update { it.updatePlayer(index) { addCard(newCard) } }
+                    delay(300L)
                 }
-                _state.update { it.updatePlayer(index) { sortCards() } }
-                _state.update { it.updatePlayer(index) { clearSelected() } }
+                _state.update { it.updatePlayer(index) { clearSelected().sortCards() } }
             }
             history.add(index, newAction)
             _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
         } else {
+            if (action.bet > 0) {
+                currentBet = action.bet
+                _state.update { it.payToBank(index, action.bet) }
+            }
             history.add(index, action)
             _state.update { it.updatePlayer(index) { copy(lastBet = action) } }
         }
