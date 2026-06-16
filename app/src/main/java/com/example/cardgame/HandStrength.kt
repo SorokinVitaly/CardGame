@@ -9,7 +9,7 @@ enum class HandStrength {
 }
 
 fun calcHandStrength(combination: DrawCombination, isPreDraw: Boolean): HandStrength {
-    val rank = combination.onHandCombination.highCard.rank
+    val rank = combination.onHandCombination.highRank
     val isIncomplete = combination.incompleteCombination != IncompleteCombinationType.NO_INCOMPLETE
     return when (combination.onHandCombination.type) {
         CombinationType.ROYAL_FLUSH,

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.Int
 
 
 @HiltViewModel
@@ -137,7 +138,8 @@ class MainViewModel @Inject constructor(
         while (true) {
             val inGamePlayers = _state.value.players.filter { it.isInGame }
             if (inGamePlayers.size == 1) {
-                gameOver(_state.value.players.indexOfFirst { it.isInGame })
+                takeBank(listOf(_state.value.players.indexOfFirst { it.isInGame }))
+                gameOver()
                 return
             }
 
@@ -214,21 +216,54 @@ class MainViewModel @Inject constructor(
             if (playerData.isInGame) {
                 val combination = combinations[i]
                 requireNotNull(combination)
-                i to combination
+                i to combination.onHandCombination
             }
             else {
                 null
             }
         }
-        val winCombination = inGameCombinations.maxBy { it.second.onHandCombination }
-        gameOver(winCombination.first)
+        val winCombination = inGameCombinations.maxBy { it.second }.second
+        val winIndexes = inGameCombinations.filter { it.second == winCombination }.map { it.first }
+        takeBank(winIndexes)
+        gameOver()
     }
 
-    private suspend fun gameOver(winIndex: Int) {
-        val mess = "${player(winIndex).name} won and take bank ${_state.value.bankChips} chips"
+    private suspend fun takeBank(winIndexes: List<Int>) {
+        require(winIndexes.isNotEmpty())
+        val winnersNames = winIndexes.joinToString { player(it).name }
+        val mess = "$winnersNames won and take bank ${_state.value.bankChips} chips"
         log(mess)
         _events.emit(UiEvent.ShowToast(mess))
-        _state.update { it.takeBank(winIndex) }
+
+        fun take(index: Int, amount: Int) {
+            log("${_state.value.players[index].name} take $amount")
+            _state.update { it.takeFromBank(index, amount) }
+        }
+
+        val numWinners = winIndexes.size
+        val part = _state.value.bankChips / numWinners
+        if (part > 0) {
+            winIndexes.forEach { index ->
+                take(index, part)
+            }
+        }
+
+        val winIndexesFirst = winIndexes.filter { it > localData.dealerIndex }
+        winIndexesFirst.forEach { index ->
+            if (_state.value.bankChips > 0) {
+                take(index, 1)
+            }
+        }
+
+        val winIndexesLast = winIndexes.filter { it <= localData.dealerIndex }
+        winIndexesLast.forEach { index ->
+            if (_state.value.bankChips > 0) {
+                take(index, 1)
+            }
+        }
+    }
+
+    private fun gameOver() {
         localData.saveState(_state.value)
         _state.update { it.copy(
             actionsAvailable = emptyList(),

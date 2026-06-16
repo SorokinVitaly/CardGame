@@ -3,88 +3,95 @@ package com.example.cardgame
 fun calcCombination(cards: List<Card>): Combination {
     require(cards.size == 5)
 
-    val firstCard = cards[0]
-    val isFlush = cards.all { it.suit == firstCard.suit }
+    val ranks = cards.map { it.rank }
+    val isFlush = cards.all { it.suit == cards[0].suit }
 
-    fun calcStraight(highCard: Card): Combination =
+    fun calcStraight(highRank: CardRank): Combination =
         if (isFlush) {
-            if (firstCard.rank == CardRank.TEN) {
-                Combination(CombinationType.ROYAL_FLUSH, highCard)
+            if (ranks[0] == CardRank.TEN) {
+                Combination(CombinationType.ROYAL_FLUSH, highRank)
             } else {
-                Combination(CombinationType.STRAIGHT_FLUSH, highCard)
+                Combination(CombinationType.STRAIGHT_FLUSH, highRank)
             }
         } else {
-            Combination(CombinationType.STRAIGHT, highCard)
+            Combination(CombinationType.STRAIGHT, highRank)
         }
 
-    val ordinalList = cards.map { it.rank.ordinal - firstCard.rank.ordinal }
+    val ordinalList = ranks.map { it.ordinal - ranks[0].ordinal }
     if (ordinalList == listOf(0, 1, 2, 3, 4)) {
-        return calcStraight(cards[4])
+        return calcStraight(ranks[4])
     }
     if (ordinalList == listOf(0, 1, 2, 3, 12)) {
-        return calcStraight(cards[3])
+        return calcStraight(ranks[3])
     }
     if (isFlush) {
-        return Combination(CombinationType.FLUSH, cards[4])
+        return Combination(CombinationType.FLUSH, ranks[4])
     }
 
-    val card1Rank = cards[1].rank
-    val card3Rank = cards[3].rank
-    val count1 = cards.count { it.rank == card1Rank }
-    val count3 = cards.count { it.rank == card3Rank }
+    val rank1 = ranks[1]
+    val rank3 = ranks[3]
+    val count1 = ranks.count { it == rank1 }
+    val count3 = ranks.count { it == rank3 }
     return when {
         count1 == 4 -> {
             Combination(
                 type = CombinationType.FOUR_OF_A_KIND,
-                highCard = if (card1Rank == cards[0].rank) { cards[3] } else { cards[4] }
+                highRank = rank1
             )
         }
         count1 == 3  && count3 == 2 -> {
             Combination(
                 type = CombinationType.FULL_HOUSE,
-                highCard = cards[2]
+                highRank = rank1,
+                lowRank =  rank3
             )
         }
         count1 == 2  && count3 == 3 -> {
             Combination(
                 type = CombinationType.FULL_HOUSE,
-                highCard = cards[4]
-            )
-        }
-        count1 == 2  && count3 == 2 -> {
-            Combination(
-                type = CombinationType.TWO_PAIRS,
-                highCard = if (card3Rank == cards[4].rank) { cards[4] } else { cards[3] }
+                highRank = rank3,
+                lowRank =  rank1
             )
         }
         count1 == 3 -> {
             Combination(
                 type = CombinationType.THREE_OF_A_KIND,
-                highCard = cards.last { it.rank == card1Rank }
+                highRank = rank1
             )
         }
         count3 == 3 -> {
             Combination(
                 type = CombinationType.THREE_OF_A_KIND,
-                highCard = cards.last { it.rank == card3Rank }
+                highRank = rank3
+            )
+        }
+        count1 == 2  && count3 == 2 -> {
+            Combination(
+                type = CombinationType.TWO_PAIRS,
+                highRank = rank3,
+                lowRank = rank1,
+                kickers = Kickers(ranks.filter { it != rank1 && it != rank3 })
             )
         }
         count1 == 2 -> {
             Combination(
                 type = CombinationType.PAIR,
-                highCard = if (card1Rank == cards[0].rank) { cards[1] } else { cards[2] }
+                highRank = rank1,
+                kickers = Kickers(ranks.filter { it != rank1 })
             )
         }
         count3 == 2 -> {
             Combination(
                 type = CombinationType.PAIR,
-                highCard = if (card3Rank == cards[4].rank) { cards[4] } else { cards[3] }
+                highRank = rank3,
+                kickers = Kickers(ranks.filter { it != rank3 })
             )
         }
         else -> {
             Combination(
                 type = CombinationType.HIGH_CARD,
-                highCard = cards[4]
+                highRank = ranks[4],
+                kickers = Kickers(ranks.take(4))
             )
         }
     }

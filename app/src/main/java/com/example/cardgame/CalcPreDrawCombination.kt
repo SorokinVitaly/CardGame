@@ -9,14 +9,13 @@ fun calcPreDrawCombination(history: History, cards: List<Card>): DrawCombination
     if (combination.type == CombinationType.THREE_OF_A_KIND) {
         return DrawCombination(
             combination,
-            cardsForDraw = cards.filter { it.rank != combination.highCard.rank }
+            cardsForDraw = cards.filter { it.rank != combination.highRank }
         )
     }
     if (combination.type == CombinationType.TWO_PAIRS) {
-        val keep = setOf(cards[1].rank, combination.highCard.rank)
         return DrawCombination(
             combination,
-            cardsForDraw = cards.filter { it.rank !in keep }
+            cardsForDraw = cards.filter { it.rank != combination.highRank && it.rank != combination.lowRank }
         )
     }
     findFourToFlush(cards)?.let {
@@ -34,11 +33,11 @@ fun calcPreDrawCombination(history: History, cards: List<Card>): DrawCombination
         )
     }
     if (combination.type == CombinationType.PAIR) {
-        val kicker = cards.last { it.rank != combination.highCard.rank }
-        val list = if (kicker.rank >= CardRank.JACK && history.isAggressiveTable()) {
-            cards.filter { it != kicker && it.rank != combination.highCard.rank }
+        val kicker = combination.highKicker()
+        val list = if (kicker >= CardRank.JACK && history.isAggressiveTable()) {
+            cards.filter { it.rank != kicker && it.rank != combination.highRank }
         } else {
-            cards.filter { it.rank != combination.highCard.rank }
+            cards.filter { it.rank != combination.highRank }
         }
         return DrawCombination(
             combination,
@@ -59,7 +58,7 @@ fun calcPreDrawCombination(history: History, cards: List<Card>): DrawCombination
             cardsForDraw = it
         )
     }
-    val numCards = if (cards[3].rank >= CardRank.JACK) 3 else 4
+    val numCards = if (combination.highKicker() >= CardRank.JACK) 3 else 4
     return DrawCombination(
         combination,
         cardsForDraw = cards.take(numCards)

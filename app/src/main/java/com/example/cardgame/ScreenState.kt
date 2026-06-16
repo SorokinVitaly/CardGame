@@ -26,13 +26,13 @@ data class ScreenState(
     fun updatePlayer(index: Int, update: PlayerData.() -> PlayerData) =
         copy(players = updateOnePlayer(index, update))
 
-    fun payToBank(index: Int, payed: Int) =
+    fun payToBank(index: Int, amount: Int) =
         copy(
-            players = updateOnePlayer(index) { payChips(payed) },
-            bankChips = bankChips + payed
+            players = updateOnePlayer(index) { payChips(amount) },
+            bankChips = bankChips + amount
         )
 
-    fun takeBank(index: Int) = payToBank(index, -bankChips)
+    fun takeFromBank(index: Int, amount: Int) = payToBank(index, -amount)
 
     private fun updateOnePlayer(index: Int, update: PlayerData.() -> PlayerData) =
         players.mapIndexed { i, player ->
