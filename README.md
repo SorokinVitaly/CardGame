@@ -13,6 +13,12 @@ Note:
 
 Android card game built with Kotlin and Jetpack Compose.
 
+## Screenshots
+
+![Main Screen](001.png)
+![Draw cards](002.png)
+![Find a winner](003.png)
+
 ## Features
 - Five-Card Draw poker engine
 - Betting rounds and chip management
