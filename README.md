@@ -13,20 +13,28 @@ Note:
 
 Android card game built with Kotlin and Jetpack Compose.
 
+## Screenshots
+
+![Main Screen](001.png)
+![Draw cards](002.png)
+![Find a winner](003.png)
+
 ## Features
-
-- Modern Android architecture
-- Jetpack Compose UI
+- Five-Card Draw poker engine
+- Betting rounds and chip management
+- Card exchange mechanics
+- AI opponents
+- Responsive Compose UI
 - Playing card deck with SVG assets
-- Responsive layouts for different screen sizes
 
-## Tech Stack
-
+## Architecture
 - Kotlin
-- Jetpack Compose
+- MVVM
 - Android ViewModel
-- Coroutines
-- Flow
+- StateFlow
+- Jetpack Compose
+- Material 3
+- Repository pattern
 
 ## Project Structure
 Third-Party Assets
