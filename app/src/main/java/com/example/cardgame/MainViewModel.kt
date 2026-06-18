@@ -144,7 +144,7 @@ class MainViewModel @Inject constructor(
             }
 
             val endRound = if (round != RoundType.DRAW) {
-                inGamePlayers.all { it.lastBet.bet == currentBet }
+                inGamePlayers.all { it.lastBet !is ActionType.NoAction && it.lastBet.bet == currentBet }
             } else {
                 inGamePlayers.all { it.lastDraw is ActionType.Draw }
             }
@@ -186,6 +186,8 @@ class MainViewModel @Inject constructor(
         }
         playerIndex = localData.dealerIndex
         round = newRound
+        numOfRaise = 0
+        currentBet = 0
         return false
     }
 
@@ -293,24 +295,26 @@ class MainViewModel @Inject constructor(
         if (round == RoundType.DRAW) {
             return listOf(ActionType.Draw())
         }
-        val (betCount, raiseCount) = if (round == RoundType.PRE_DRAW) PRE_DRAW_BET to PRE_DRAW_RAISE else POST_DRAW_BET to POST_DRAW_RAISE
         val chips = player(playerIndex).chips
         val bets = ArrayList<ActionType>()
         if (currentBet == 0) {
             bets.add(ActionType.Check())
+            val betCount = if (round == RoundType.PRE_DRAW) PRE_DRAW_BET else POST_DRAW_BET
             if (chips >= betCount) {
                 bets.add(ActionType.Bet(betCount))
             }
-            bets.add(ActionType.Fold())
         } else {
-            if (chips >= currentBet) {
+            val lastBet = player(playerIndex).lastBet.bet
+            if (chips >= currentBet - lastBet) {
                 bets.add(ActionType.Call(currentBet))
             }
-            if (chips >= currentBet + raiseCount && numOfRaise < MAX_NUM_OF_RAISE) {
-                bets.add(ActionType.Raise(currentBet + raiseCount))
+            val raiseCount = if (round == RoundType.PRE_DRAW) PRE_DRAW_RAISE else POST_DRAW_RAISE
+            val newBet = currentBet + raiseCount
+            if (chips >= newBet - lastBet && numOfRaise < MAX_NUM_OF_RAISE) {
+                bets.add(ActionType.Raise(newBet))
             }
-            bets.add(ActionType.Fold())
         }
+        bets.add(ActionType.Fold())
         require(bets.isNotEmpty())
         return bets
     }
@@ -375,9 +379,13 @@ class MainViewModel @Inject constructor(
             history.add(index, newAction)
             _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
         } else {
-            if (action.bet > 0) {
+            if (action !is ActionType.Fold) {
+                val amountToPay = action.bet - player(index).lastBet.bet
+                log("$index -> bet = ${action.bet}, amountToPay = $amountToPay")
                 currentBet = action.bet
-                _state.update { it.payToBank(index, action.bet) }
+                if (amountToPay > 0) {
+                    _state.update { it.payToBank(index, amountToPay) }
+                }
             }
             history.add(index, action)
             _state.update { it.updatePlayer(index) { copy(lastBet = action) } }

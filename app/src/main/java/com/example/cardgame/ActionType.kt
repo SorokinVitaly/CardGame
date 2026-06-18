@@ -7,5 +7,5 @@ sealed class ActionType(val name: String, val bet: Int = 0) {
     class Check : ActionType("Check")
     class Fold : ActionType("Fold")
     class Draw(val number: Int = 0) : ActionType("Draw")
-    class NoAction : ActionType("", -1)
+    class NoAction : ActionType("")
 }
