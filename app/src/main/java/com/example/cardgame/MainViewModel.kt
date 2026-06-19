@@ -144,7 +144,7 @@ class MainViewModel @Inject constructor(
             }
 
             val endRound = if (round != RoundType.DRAW) {
-                inGamePlayers.all { it.lastBet !is ActionType.NoAction && it.lastBet.bet == currentBet }
+                inGamePlayers.all { it.lastBet !is ActionType.NoAction && it.lastBet.paid == currentBet }
             } else {
                 inGamePlayers.all { it.lastDraw is ActionType.Draw }
             }
@@ -296,26 +296,26 @@ class MainViewModel @Inject constructor(
             return listOf(ActionType.Draw())
         }
         val chips = player(playerIndex).chips
+        val roundBet = if (round == RoundType.PRE_DRAW) PRE_DRAW_BET else POST_DRAW_BET
         val bets = ArrayList<ActionType>()
+
         if (currentBet == 0) {
             bets.add(ActionType.Check())
-            val betCount = if (round == RoundType.PRE_DRAW) PRE_DRAW_BET else POST_DRAW_BET
-            if (chips >= betCount) {
-                bets.add(ActionType.Bet(betCount))
+            if (chips >= roundBet) {
+                bets.add(ActionType.Bet(roundBet))
             }
         } else {
-            val lastBet = player(playerIndex).lastBet.bet
-            if (chips >= currentBet - lastBet) {
-                bets.add(ActionType.Call(currentBet))
+            val prevPaid = player(playerIndex).lastBet.paid
+            if (chips >= currentBet - prevPaid) {
+                bets.add(ActionType.Call(currentBet, prevPaid))
             }
-            val raiseCount = if (round == RoundType.PRE_DRAW) PRE_DRAW_RAISE else POST_DRAW_RAISE
-            val newBet = currentBet + raiseCount
-            if (chips >= newBet - lastBet && numOfRaise < MAX_NUM_OF_RAISE) {
-                bets.add(ActionType.Raise(newBet))
+
+            val raiseTo = currentBet + roundBet
+            if (chips >= raiseTo - prevPaid && numOfRaise < MAX_NUM_OF_RAISE) {
+                bets.add(ActionType.Raise(raiseTo, prevPaid))
             }
         }
         bets.add(ActionType.Fold())
-        require(bets.isNotEmpty())
         return bets
     }
 
@@ -361,28 +361,11 @@ class MainViewModel @Inject constructor(
             numOfRaise++
         }
         if (action is ActionType.Draw) {
-            val selected = _state.value.players[index].selectedCards
-            val newAction = ActionType.Draw(selected.size)
-            if (selected.isNotEmpty()) {
-                selected.forEach { card ->
-                    _state.update { it.updatePlayer(index) { removeCard(card) } }
-                    delay(300L)
-                }
-                delay(500L)
-                selected.forEach { card ->
-                    val newCard = deck.removeAt(deck.lastIndex)
-                    _state.update { it.updatePlayer(index) { addCard(newCard) } }
-                    delay(300L)
-                }
-                _state.update { it.updatePlayer(index) { clearSelected().sortCards() } }
-            }
-            history.add(index, newAction)
-            _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
+            applyDrawAction(index)
         } else {
             if (action !is ActionType.Fold) {
-                val amountToPay = action.bet - player(index).lastBet.bet
-                log("$index -> bet = ${action.bet}, amountToPay = $amountToPay")
-                currentBet = action.bet
+                currentBet = action.paid
+                val amountToPay = action.payNow
                 if (amountToPay > 0) {
                     _state.update { it.payToBank(index, amountToPay) }
                 }
@@ -392,24 +375,27 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    private suspend fun applyDrawAction(index: Int) {
+        val selected = _state.value.players[index].selectedCards
+        val newAction = ActionType.Draw(selected.size)
+        if (selected.isNotEmpty()) {
+            selected.forEach { card ->
+                _state.update { it.updatePlayer(index) { removeCard(card) } }
+                delay(300L)
+            }
+            delay(500L)
+            selected.forEach { card ->
+                val newCard = deck.removeAt(deck.lastIndex)
+                _state.update { it.updatePlayer(index) { addCard(newCard) } }
+                delay(300L)
+            }
+            _state.update { it.updatePlayer(index) { clearSelected().sortCards() } }
+        }
+        history.add(index, newAction)
+        _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
+    }
+
     private fun player(index: Int) = _state.value.players[index]
 
     private fun log(mess: String) = Log.e("GamePlay", mess)
-
-    companion object {
-        const val ANTE_BET = 1
-        const val PRE_DRAW_BET = 1
-        const val PRE_DRAW_RAISE = 1
-        const val POST_DRAW_BET = 2
-        const val POST_DRAW_RAISE = 2
-        const val MAX_NUM_OF_RAISE = 3
-
-        val drawOdds = mapOf(
-            IncompleteCombinationType.FOUR_TO_FLUSH to 0.19f,
-            IncompleteCombinationType.FOUR_TO_STRAIGHT_OPEN to 0.17f,
-            IncompleteCombinationType.FOUR_TO_STRAIGHT to 0.09f,
-            IncompleteCombinationType.THREE_TO_STRAIGHT_FLUSH to 0.12f,
-            IncompleteCombinationType.NO_INCOMPLETE to 0f
-        )
-    }
 }
