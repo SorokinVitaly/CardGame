@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                 ConstraintLayout(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(12f)
+                        .weight(1f)
                 ) {
                     Bank(
                         bankChips = state.bankChips,
@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .height(48.dp)
                 ) {
                     ActionBar(state)
                 }
@@ -133,9 +133,7 @@ class MainActivity : ComponentActivity() {
         } else {
             CircularProgressIndicator(
                 color = Color.Yellow,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .size(24.dp)
+                modifier = Modifier.size(40.dp)
             )
         }
     }
