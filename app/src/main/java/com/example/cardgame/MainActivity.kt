@@ -1,5 +1,6 @@
 package com.example.cardgame
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -22,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
@@ -76,18 +78,21 @@ class MainActivity : ComponentActivity() {
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
+                    val biasShift =
+                        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 0f else 0.15f
+
                     Bank(
                         bankChips = state.bankChips,
                         modifier = Modifier.constrainAs(createRef()) { centerTo(parent) }
                     )
-                    state.players.forEachIndexed { i, player ->
+                    state.players.forEachIndexed { index, player ->
                         val isCardsOpen = when {
-                            i==0 -> true
+                            index == 0 -> true
                             !player.isInGame -> false
                             else -> state.isCardsOpen
                         }
                         fun onCardClick(card: Card) {
-                            if (state.isDrawEnabled && i == 0) {
+                            if (state.isDrawEnabled && index == 0) {
                                 viewModel.onCardClick(card)
                             }
                         }
@@ -97,7 +102,7 @@ class MainActivity : ComponentActivity() {
                             onCardClick = ::onCardClick,
                             modifier = Modifier.constrainAs(
                                 createRef(),
-                                playerConstraint(i)
+                                playerConstraint(index, biasShift)
                             )
                         )
                     }
@@ -138,11 +143,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun playerConstraint(index: Int): ConstrainScope.() -> Unit = {
+    private fun playerConstraint(index: Int, biasShift: Float): ConstrainScope.() -> Unit = {
         when (index) {
             0 -> {
                 centerHorizontallyTo(parent)
                 bottom.linkTo(parent.bottom, margin = 5.dp)
+                horizontalBias = 0.5f + biasShift
             }
 
             1 -> {
@@ -153,6 +159,7 @@ class MainActivity : ComponentActivity() {
             2 -> {
                 centerHorizontallyTo(parent)
                 top.linkTo(parent.top, margin = 5.dp)
+                horizontalBias = 0.5f - biasShift
             }
 
             3 -> {
