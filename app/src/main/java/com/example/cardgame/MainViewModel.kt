@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.Int
 
 
 @HiltViewModel
@@ -20,58 +19,79 @@ class MainViewModel @Inject constructor(
     private val localData: LocalDataRepository,
     private val history: History
 ) : ViewModel() {
-    private val _state = MutableStateFlow(localData.savedState())
+    private val savedState = loadSavedState()
+
+    private val _state = MutableStateFlow(savedState.screenState)
     val state = _state.asStateFlow()
     private val _events = MutableSharedFlow<UiEvent>()
     val events = _events.asSharedFlow()
 
-    enum class RoundType {
-        PRE_DRAW,
-        DRAW,
-        POST_DRAW
-    }
-
-    private val deck = mutableListOf<Card>()
-    private var currentBet = 0
-    private var numOfRaise = 0
-    private var playerIndex = 0
-    private var round = RoundType.PRE_DRAW
+    private val deck = savedState.deck.toMutableList()
+    private var currentBet = savedState.currentBet
+    private var numOfRaise = savedState.numOfRaise
+    private var playerIndex = savedState.playerIndex
+    private var round = savedState.round
     private val combinations = arrayOfNulls<DrawCombination?>(4)
 
     init {
         if (localData.isGameStarted) {
-            onResetGame()
+            viewModelScope.launch {
+                _state.update { it.copy(isActionAvailable = false) }
+                if (round == RoundType.PRE_DRAW) {
+                    preCalculatePreDraw()
+                } else {
+                    preCalculatePostDraw()
+                }
+                mainGameLoop()
+            }
         }
     }
 
     fun onResetGame() {
         viewModelScope.launch {
             localData.resetGame()
-            _state.update { localData.savedState() }
+            _state.update { loadSavedState().screenState }
             val mess = "Game was restarted"
-            log(mess)
             delay(500L)
-            _events.emit(UiEvent.ShowToast(mess))
+            logAndShow(mess)
         }
     }
 
     fun onDialNext() {
         viewModelScope.launch {
-            _state.update { localData.savedState() }
-            localData.isJustReset = false
-            localData.isGameStarted = true
             val dealerIndex = nextInGameIndex(localData.dealerIndex)
             localData.dealerIndex = dealerIndex
-            _state.update { it.copy(isActionAvailable = false) }
-            _state.update { it.updatePlayer(dealerIndex) { setDialer() } }
-            newDeck()
-            dealingCards()
-            payAnte()
+            _state.update {
+                it.copy(
+                    actionsAvailable = emptyList(),
+                    bankChips = 0,
+                    isActionAvailable = false,
+                    isDealAvailable = true,
+                    isResetAvailable = true,
+                    isCardsOpen = false,
+                    players = it.players.mapIndexed { i, player ->
+                        player.copy(
+                            cards = emptyList(),
+                            lastBet = ActionType.NoAction(),
+                            isDialer = i == dealerIndex
+                        )
+                    }
+                )
+            }
             currentBet = 0
             numOfRaise = 0
             playerIndex = dealerIndex
             round = RoundType.PRE_DRAW
             history.clear()
+            if (deck.size != 52) {
+                newDeck()
+            }
+            saveSnapshot()
+            dealingCards()
+            localData.isResetAvailable = true
+            localData.isGameStarted = true
+            preCalculatePreDraw()
+            payAnte()
             mainGameLoop()
         }
     }
@@ -80,6 +100,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isActionAvailable = false, isDrawEnabled = false) }
             applyAction(0, action)
+            saveSnapshot()
             mainGameLoop()
         }
     }
@@ -117,10 +138,22 @@ class MainViewModel @Inject constructor(
         }
         delay(500L)
         _state.update { it.updateAllPlayers { sortCards() } }
+    }
 
+    private fun preCalculatePreDraw() {
         repeat(4) { index ->
             if (player(index).isActive) {
                 combinations[index] = calcPreDrawCombination(history, player(index).cards)
+            }
+        }
+    }
+
+    private fun preCalculatePostDraw() {
+        repeat(4) { index ->
+            if (player(index).isInGame) {
+                combinations[index] = DrawCombination(
+                    onHandCombination = calcCombination(player(index).cards)
+                )
             }
         }
     }
@@ -177,6 +210,7 @@ class MainViewModel @Inject constructor(
             }
             RoundType.DRAW -> {
                 endDrawRound()
+                preCalculatePostDraw()
                 RoundType.POST_DRAW
             }
             RoundType.POST_DRAW -> {
@@ -203,13 +237,6 @@ class MainViewModel @Inject constructor(
                 }
             )
         }
-        repeat(4) { index ->
-            if (player(index).isInGame) {
-                combinations[index] = DrawCombination(
-                    onHandCombination = calcCombination(player(index).cards)
-                )
-            }
-        }
     }
 
     private suspend fun endPostDrawRound() {
@@ -234,11 +261,9 @@ class MainViewModel @Inject constructor(
         require(winIndexes.isNotEmpty())
         val winnersNames = winIndexes.joinToString { player(it).name }
         val mess = "$winnersNames won and take bank ${_state.value.bankChips} chips"
-        log(mess)
-        _events.emit(UiEvent.ShowToast(mess))
+        logAndShow(mess)
 
         fun take(index: Int, amount: Int) {
-            log("${_state.value.players[index].name} take $amount")
             _state.update { it.takeFromBank(index, amount) }
         }
 
@@ -266,7 +291,7 @@ class MainViewModel @Inject constructor(
     }
 
     private fun gameOver() {
-        localData.saveState(_state.value)
+        localData.isGameStarted = false
         _state.update { it.copy(
             actionsAvailable = emptyList(),
             isDrawEnabled = false,
@@ -349,9 +374,7 @@ class MainViewModel @Inject constructor(
                 isFacingBet,
                 isPreDraw
             )
-            val action = resolveAction(strategy, availableActions)
-            log("botBetting: $index -> ${player(index).cards} $strength $strategy ${action.name}")
-            action
+            resolveAction(strategy, availableActions)
         }
     }
 
@@ -395,7 +418,132 @@ class MainViewModel @Inject constructor(
         _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
     }
 
+    private fun saveSnapshot() {
+        val players = state.value.players
+        with (localData) {
+            player0Name = players[0].name
+            player0Cards = Card.serializeList(players[0].cards)
+            player0Chips = players[0].chips
+            player0IsActive = players[0].isActive
+            player0LastBet = players[0].lastBet.serialize()
+
+            player1Name = players[1].name
+            player1Cards = Card.serializeList(players[1].cards)
+            player1Chips = players[1].chips
+            player1IsActive = players[1].isActive
+            player1LastBet = players[1].lastBet.serialize()
+
+            player2Name = players[2].name
+            player2Cards = Card.serializeList(players[2].cards)
+            player2Chips = players[2].chips
+            player2IsActive = players[2].isActive
+            player2LastBet = players[2].lastBet.serialize()
+
+            player3Name = players[3].name
+            player3Cards = Card.serializeList(players[3].cards)
+            player3Chips = players[3].chips
+            player3IsActive = players[3].isActive
+            player3LastBet = players[3].lastBet.serialize()
+
+            bankChips = state.value.bankChips
+            isResetAvailable = state.value.isResetAvailable
+        }
+        localData.currentBet = currentBet
+        localData.numOfRaise = numOfRaise
+        localData.playerIndex = playerIndex
+        localData.round = round.ordinal
+        localData.deck = Card.serializeList(deck)
+        localData.history = history.serialize()
+    }
+
+    private fun restoreSnapshot(): SavedState {
+        history.unserialize(localData.history)
+
+        val screenState = with (localData) {
+            val player0 = PlayerData(
+                name = player0Name,
+                cards = Card.unserializeList(player0Cards),
+                chips = player0Chips,
+                isActive = player0IsActive,
+                isDialer = dealerIndex == 0,
+                lastBet = ActionType.unserialize(player0LastBet)
+            )
+            val player1 = PlayerData(
+                name = player1Name,
+                cards = Card.unserializeList(player1Cards),
+                chips = player1Chips,
+                isActive = player1IsActive,
+                isDialer = dealerIndex == 1,
+                lastBet = ActionType.unserialize(player1LastBet)
+            )
+            val player2 = PlayerData(
+                name = player2Name,
+                cards = Card.unserializeList(player2Cards),
+                chips = player2Chips,
+                isActive = player2IsActive,
+                isDialer = dealerIndex == 2,
+                lastBet = ActionType.unserialize(player2LastBet)
+            )
+            val player3 = PlayerData(
+                name = player3Name,
+                cards = Card.unserializeList(player3Cards),
+                chips = player3Chips,
+                isActive = player3IsActive,
+                isDialer = dealerIndex == 3,
+                lastBet = ActionType.unserialize(player3LastBet)
+            )
+            ScreenState(
+                players = listOf(player0, player1, player2, player3),
+                actionsAvailable = emptyList(),
+                bankChips = bankChips,
+                isDrawEnabled = false,
+                isActionAvailable = true,
+                isDealAvailable = true,
+                isResetAvailable = isResetAvailable,
+                isCardsOpen = false
+            )
+        }
+
+        return SavedState(
+            screenState = screenState,
+            currentBet = localData.currentBet,
+            numOfRaise = localData.numOfRaise,
+            playerIndex = localData.playerIndex,
+            round = RoundType.entries[localData.round],
+            deck = Card.unserializeList(localData.deck)
+        )
+    }
+
+    private fun loadSavedState(): SavedState =
+        try {
+            restoreSnapshot()
+        } catch(_: Exception) {
+            log("Local data is broken. Game was restarted")
+            localData.resetGame()
+            restoreSnapshot()
+        }
+
     private fun player(index: Int) = _state.value.players[index]
 
     private fun log(mess: String) = Log.e("GamePlay", mess)
+
+    private suspend fun logAndShow(mess: String) {
+        log(mess)
+        _events.emit(UiEvent.ShowToast(mess))
+    }
 }
+
+enum class RoundType {
+    PRE_DRAW,
+    DRAW,
+    POST_DRAW
+}
+
+class SavedState(
+    val screenState: ScreenState,
+    val currentBet: Int,
+    val numOfRaise: Int,
+    val playerIndex: Int,
+    val round: RoundType,
+    val deck: List<Card>,
+)

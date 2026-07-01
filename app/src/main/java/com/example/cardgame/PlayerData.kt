@@ -1,6 +1,5 @@
 package com.example.cardgame
 
-
 data class PlayerData(
     val name: String,
     val cards: List<Card> = emptyList(),
@@ -25,5 +24,4 @@ data class PlayerData(
     fun addCard(card: Card) = copy(cards = cards + card)
     fun removeCard(card: Card) = copy(cards = cards - card)
     fun setSelected(cardsForDraw: List<Card>) = copy(selectedCards = cardsForDraw.toSet())
-    fun setDialer() = copy(isDialer = true)
 }

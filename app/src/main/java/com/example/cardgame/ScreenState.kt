@@ -38,9 +38,4 @@ data class ScreenState(
         players.mapIndexed { i, player ->
             if (index == i) player.update() else player
         }
-
-    companion object {
-        fun isDealAvailable(players: List<PlayerData>): Boolean =
-            players.first().isActive && players.count { it.isActive } > 1
-    }
 }
