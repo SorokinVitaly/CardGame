@@ -4,9 +4,9 @@ data class PlayerData(
     val name: String,
     val cards: List<Card> = emptyList(),
     val selectedCards: Set<Card> = emptySet(),
-    val chips: Int = 0,
+    val chips: Int,
     val isActive: Boolean,
-    val isDialer: Boolean = false,
+    val isDialer: Boolean,
     val lastDraw: ActionType = ActionType.NoAction(),
     val lastBet: ActionType = ActionType.NoAction()
 ) {

@@ -10,24 +10,28 @@ interface LocalDataRepository {
     var player0Cards: String
     var player0Chips: Int
     var player0IsActive: Boolean
+    var player0LastDraw: String
     var player0LastBet: String
 
     var player1Name: String
     var player1Cards: String
     var player1Chips: Int
     var player1IsActive: Boolean
+    var player1LastDraw: String
     var player1LastBet: String
 
     var player2Name: String
     var player2Cards: String
     var player2Chips: Int
     var player2IsActive: Boolean
+    var player2LastDraw: String
     var player2LastBet: String
 
     var player3Name: String
     var player3Cards: String
     var player3Chips: Int
     var player3IsActive: Boolean
+    var player3LastDraw: String
     var player3LastBet: String
 
     var history: String
@@ -64,6 +68,10 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
         ::player0IsActive.name,
         true
     )
+    override var player0LastDraw: String by PreferencesDelegate(
+        ::player0LastDraw.name,
+        ""
+    )
     override var player0LastBet: String by PreferencesDelegate(
         ::player0LastBet.name,
         ""
@@ -84,6 +92,10 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
     override var player1IsActive: Boolean by PreferencesDelegate(
         ::player1IsActive.name,
         true
+    )
+    override var player1LastDraw: String by PreferencesDelegate(
+        ::player1LastDraw.name,
+        ""
     )
     override var player1LastBet: String by PreferencesDelegate(
         ::player1LastBet.name,
@@ -106,6 +118,10 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
         ::player2IsActive.name,
         true
     )
+    override var player2LastDraw: String by PreferencesDelegate(
+        ::player2LastDraw.name,
+        ""
+    )
     override var player2LastBet: String by PreferencesDelegate(
         ::player2LastBet.name,
         ""
@@ -126,6 +142,10 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
     override var player3IsActive: Boolean by PreferencesDelegate(
         ::player3IsActive.name,
         true
+    )
+    override var player3LastDraw: String by PreferencesDelegate(
+        ::player3LastDraw.name,
+        ""
     )
     override var player3LastBet: String by PreferencesDelegate(
         ::player3LastBet.name,

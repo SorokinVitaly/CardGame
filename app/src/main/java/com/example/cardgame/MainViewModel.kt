@@ -34,7 +34,9 @@ class MainViewModel @Inject constructor(
     private val combinations = arrayOfNulls<DrawCombination?>(4)
 
     init {
-        if (localData.isGameStarted) {
+        if (localData.isGameStarted &&
+            state.value.players.all { it.cards.size == 5 || !it.isActive }
+        ) {
             viewModelScope.launch {
                 _state.update { it.copy(isActionAvailable = false) }
                 if (round == RoundType.PRE_DRAW) {
@@ -59,37 +61,19 @@ class MainViewModel @Inject constructor(
 
     fun onDialNext() {
         viewModelScope.launch {
-            val dealerIndex = nextInGameIndex(localData.dealerIndex)
-            localData.dealerIndex = dealerIndex
-            _state.update {
-                it.copy(
-                    actionsAvailable = emptyList(),
-                    bankChips = 0,
-                    isActionAvailable = false,
-                    isDealAvailable = true,
-                    isResetAvailable = true,
-                    isCardsOpen = false,
-                    players = it.players.mapIndexed { i, player ->
-                        player.copy(
-                            cards = emptyList(),
-                            lastBet = ActionType.NoAction(),
-                            isDialer = i == dealerIndex
-                        )
-                    }
-                )
-            }
+            localData.isResetAvailable = true
+            localData.isGameStarted = true
             currentBet = 0
             numOfRaise = 0
-            playerIndex = dealerIndex
+            playerIndex = localData.dealerIndex
             round = RoundType.PRE_DRAW
             history.clear()
             if (deck.size != 52) {
                 newDeck()
             }
+            initialState()
             saveSnapshot()
             dealingCards()
-            localData.isResetAvailable = true
-            localData.isGameStarted = true
             preCalculatePreDraw()
             payAnte()
             mainGameLoop()
@@ -116,6 +100,27 @@ class MainViewModel @Inject constructor(
                     }
                 )
             }
+        }
+    }
+
+    private fun initialState() {
+        _state.update {
+            it.copy(
+                actionsAvailable = emptyList(),
+                bankChips = 0,
+                isActionAvailable = false,
+                isDealAvailable = true,
+                isResetAvailable = true,
+                isCardsOpen = false,
+                players = it.players.mapIndexed { i, player ->
+                    player.copy(
+                        cards = emptyList(),
+                        lastDraw = ActionType.NoAction(),
+                        lastBet = ActionType.NoAction(),
+                        isDialer = i == localData.dealerIndex
+                    )
+                }
+            )
         }
     }
 
@@ -187,10 +192,14 @@ class MainViewModel @Inject constructor(
                 }
             }
 
+            val prevPlayerIndex = playerIndex
             playerIndex = nextInGameIndex(playerIndex)
+            log("$prevPlayerIndex -> $playerIndex")
+
             val availableActions = availableActions(playerIndex)
             if (playerIndex == 0) {
                 if (round == RoundType.DRAW) {
+                    log("player0 Draw")
                     _state.update { it.copy(isDrawEnabled = true) }
                     _events.emit(UiEvent.ShowToast("Please choose cards to draw"))
                 }
@@ -291,6 +300,7 @@ class MainViewModel @Inject constructor(
     }
 
     private fun gameOver() {
+        localData.dealerIndex = nextInGameIndex(localData.dealerIndex)
         localData.isGameStarted = false
         _state.update { it.copy(
             actionsAvailable = emptyList(),
@@ -299,6 +309,7 @@ class MainViewModel @Inject constructor(
             isDealAvailable = true,
             isResetAvailable = true
         ) }
+        saveSnapshot()
     }
 
     private fun nextInGameIndex(index: Int): Int {
@@ -425,24 +436,28 @@ class MainViewModel @Inject constructor(
             player0Cards = Card.serializeList(players[0].cards)
             player0Chips = players[0].chips
             player0IsActive = players[0].isActive
+            player0LastDraw = players[0].lastDraw.serialize()
             player0LastBet = players[0].lastBet.serialize()
 
             player1Name = players[1].name
             player1Cards = Card.serializeList(players[1].cards)
             player1Chips = players[1].chips
             player1IsActive = players[1].isActive
+            player1LastDraw = players[1].lastDraw.serialize()
             player1LastBet = players[1].lastBet.serialize()
 
             player2Name = players[2].name
             player2Cards = Card.serializeList(players[2].cards)
             player2Chips = players[2].chips
             player2IsActive = players[2].isActive
+            player2LastDraw = players[2].lastDraw.serialize()
             player2LastBet = players[2].lastBet.serialize()
 
             player3Name = players[3].name
             player3Cards = Card.serializeList(players[3].cards)
             player3Chips = players[3].chips
             player3IsActive = players[3].isActive
+            player3LastDraw = players[3].lastDraw.serialize()
             player3LastBet = players[3].lastBet.serialize()
 
             bankChips = state.value.bankChips
@@ -466,6 +481,7 @@ class MainViewModel @Inject constructor(
                 chips = player0Chips,
                 isActive = player0IsActive,
                 isDialer = dealerIndex == 0,
+                lastDraw = ActionType.unserialize(player0LastDraw),
                 lastBet = ActionType.unserialize(player0LastBet)
             )
             val player1 = PlayerData(
@@ -474,6 +490,7 @@ class MainViewModel @Inject constructor(
                 chips = player1Chips,
                 isActive = player1IsActive,
                 isDialer = dealerIndex == 1,
+                lastDraw = ActionType.unserialize(player1LastDraw),
                 lastBet = ActionType.unserialize(player1LastBet)
             )
             val player2 = PlayerData(
@@ -482,6 +499,7 @@ class MainViewModel @Inject constructor(
                 chips = player2Chips,
                 isActive = player2IsActive,
                 isDialer = dealerIndex == 2,
+                lastDraw = ActionType.unserialize(player2LastDraw),
                 lastBet = ActionType.unserialize(player2LastBet)
             )
             val player3 = PlayerData(
@@ -490,6 +508,7 @@ class MainViewModel @Inject constructor(
                 chips = player3Chips,
                 isActive = player3IsActive,
                 isDialer = dealerIndex == 3,
+                lastDraw = ActionType.unserialize(player3LastDraw),
                 lastBet = ActionType.unserialize(player3LastBet)
             )
             ScreenState(
