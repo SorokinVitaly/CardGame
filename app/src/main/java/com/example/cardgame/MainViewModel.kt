@@ -69,10 +69,12 @@ class MainViewModel @Inject constructor(
             round = RoundType.PRE_DRAW
             history.clear()
             if (deck.size != 52) {
-                newDeck()
+                deck.clear()
+                deck.addAll(deckPoker)
+                deck.shuffle()
             }
             initialState()
-            saveSnapshot()
+            saveState()
             dealingCards()
             preCalculatePreDraw()
             payAnte()
@@ -84,7 +86,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isActionAvailable = false, isDrawEnabled = false) }
             applyAction(0, action)
-            saveSnapshot()
+            saveState()
             mainGameLoop()
         }
     }
@@ -124,51 +126,47 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun newDeck() {
-        deck.clear()
-        deck.addAll(deckPoker)
-        deck.shuffle()
+    private suspend fun forEachActivePlayer(action: suspend PlayerData.(Int) -> Unit) {
+        repeat(4) { index ->
+            player(index).apply {
+                if (isActive) {
+                    action(index)
+                }
+            }
+        }
     }
 
     private suspend fun dealingCards() {
         _state.update { it.updateAllPlayers { clearCards() } }
         repeat(5) {
-            repeat(4) { index ->
-                if (player(index).isActive) {
-                    delay(300L)
-                    val card = deck.removeAt(deck.lastIndex)
-                    _state.update { it.updatePlayer(index) { addCard(card) } }
-                }
+            forEachActivePlayer { index ->
+                delay(300L)
+                val card = deck.removeAt(deck.lastIndex)
+                _state.update { it.updatePlayer(index) { addCard(card) } }
             }
         }
         delay(500L)
         _state.update { it.updateAllPlayers { sortCards() } }
     }
 
-    private fun preCalculatePreDraw() {
-        repeat(4) { index ->
-            if (player(index).isActive) {
-                combinations[index] = calcPreDrawCombination(history, player(index).cards)
-            }
+    private suspend fun preCalculatePreDraw() {
+        forEachActivePlayer { index ->
+            combinations[index] = calcPreDrawCombination(history, cards)
         }
     }
 
-    private fun preCalculatePostDraw() {
-        repeat(4) { index ->
-            if (player(index).isInGame) {
-                combinations[index] = DrawCombination(
-                    onHandCombination = calcCombination(player(index).cards)
-                )
+    private suspend fun preCalculatePostDraw() {
+        forEachActivePlayer { index ->
+            if (lastBet !is ActionType.Fold) {
+                combinations[index] = DrawCombination(calcCombination(cards))
             }
         }
     }
 
     private suspend fun payAnte() {
-        repeat(4) { index ->
-            if (player(index).isActive) {
-                delay(300L)
-                _state.update { it.payToBank(index, ANTE_BET) }
-            }
+        forEachActivePlayer { index ->
+            delay(300L)
+            _state.update { it.payToBank(index, ANTE_BET) }
         }
     }
 
@@ -193,7 +191,7 @@ class MainViewModel @Inject constructor(
             }
 
             val prevPlayerIndex = playerIndex
-            playerIndex = nextInGameIndex(playerIndex)
+            playerIndex = nextPlayerIndex(playerIndex) { isInGame }
             log("$prevPlayerIndex -> $playerIndex")
 
             val availableActions = availableActions(playerIndex)
@@ -300,7 +298,7 @@ class MainViewModel @Inject constructor(
     }
 
     private fun gameOver() {
-        localData.dealerIndex = nextInGameIndex(localData.dealerIndex)
+        localData.dealerIndex = nextPlayerIndex(localData.dealerIndex) { isActive }
         localData.isGameStarted = false
         _state.update { it.copy(
             actionsAvailable = emptyList(),
@@ -309,15 +307,15 @@ class MainViewModel @Inject constructor(
             isDealAvailable = true,
             isResetAvailable = true
         ) }
-        saveSnapshot()
+        saveState()
     }
 
-    private fun nextInGameIndex(index: Int): Int {
+    private fun nextPlayerIndex(index: Int, predicate: PlayerData.() -> Boolean): Int {
         val first = (index + 1) and 3
         var current = first
 
         while (true) {
-            if (player(current).isInGame) {
+            if (player(current).predicate()) {
                 return current
             }
             current = (current + 1) and 3
@@ -429,117 +427,25 @@ class MainViewModel @Inject constructor(
         _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
     }
 
-    private fun saveSnapshot() {
-        val players = state.value.players
-        with (localData) {
-            player0Name = players[0].name
-            player0Cards = Card.serializeList(players[0].cards)
-            player0Chips = players[0].chips
-            player0IsActive = players[0].isActive
-            player0LastDraw = players[0].lastDraw.serialize()
-            player0LastBet = players[0].lastBet.serialize()
-
-            player1Name = players[1].name
-            player1Cards = Card.serializeList(players[1].cards)
-            player1Chips = players[1].chips
-            player1IsActive = players[1].isActive
-            player1LastDraw = players[1].lastDraw.serialize()
-            player1LastBet = players[1].lastBet.serialize()
-
-            player2Name = players[2].name
-            player2Cards = Card.serializeList(players[2].cards)
-            player2Chips = players[2].chips
-            player2IsActive = players[2].isActive
-            player2LastDraw = players[2].lastDraw.serialize()
-            player2LastBet = players[2].lastBet.serialize()
-
-            player3Name = players[3].name
-            player3Cards = Card.serializeList(players[3].cards)
-            player3Chips = players[3].chips
-            player3IsActive = players[3].isActive
-            player3LastDraw = players[3].lastDraw.serialize()
-            player3LastBet = players[3].lastBet.serialize()
-
-            bankChips = state.value.bankChips
-            isResetAvailable = state.value.isResetAvailable
-        }
-        localData.currentBet = currentBet
-        localData.numOfRaise = numOfRaise
-        localData.playerIndex = playerIndex
-        localData.round = round.ordinal
-        localData.deck = Card.serializeList(deck)
-        localData.history = history.serialize()
-    }
-
-    private fun restoreSnapshot(): SavedState {
-        history.unserialize(localData.history)
-
-        val screenState = with (localData) {
-            val player0 = PlayerData(
-                name = player0Name,
-                cards = Card.unserializeList(player0Cards),
-                chips = player0Chips,
-                isActive = player0IsActive,
-                isDialer = dealerIndex == 0,
-                lastDraw = ActionType.unserialize(player0LastDraw),
-                lastBet = ActionType.unserialize(player0LastBet)
-            )
-            val player1 = PlayerData(
-                name = player1Name,
-                cards = Card.unserializeList(player1Cards),
-                chips = player1Chips,
-                isActive = player1IsActive,
-                isDialer = dealerIndex == 1,
-                lastDraw = ActionType.unserialize(player1LastDraw),
-                lastBet = ActionType.unserialize(player1LastBet)
-            )
-            val player2 = PlayerData(
-                name = player2Name,
-                cards = Card.unserializeList(player2Cards),
-                chips = player2Chips,
-                isActive = player2IsActive,
-                isDialer = dealerIndex == 2,
-                lastDraw = ActionType.unserialize(player2LastDraw),
-                lastBet = ActionType.unserialize(player2LastBet)
-            )
-            val player3 = PlayerData(
-                name = player3Name,
-                cards = Card.unserializeList(player3Cards),
-                chips = player3Chips,
-                isActive = player3IsActive,
-                isDialer = dealerIndex == 3,
-                lastDraw = ActionType.unserialize(player3LastDraw),
-                lastBet = ActionType.unserialize(player3LastBet)
-            )
-            ScreenState(
-                players = listOf(player0, player1, player2, player3),
-                actionsAvailable = emptyList(),
-                bankChips = bankChips,
-                isDrawEnabled = false,
-                isActionAvailable = true,
-                isDealAvailable = true,
-                isResetAvailable = isResetAvailable,
-                isCardsOpen = false
-            )
-        }
-
-        return SavedState(
-            screenState = screenState,
-            currentBet = localData.currentBet,
-            numOfRaise = localData.numOfRaise,
-            playerIndex = localData.playerIndex,
-            round = RoundType.entries[localData.round],
-            deck = Card.unserializeList(localData.deck)
-        )
-    }
+    private fun saveState() =
+        saveSnapshot(
+            localData,
+            history,
+            state.value,
+            currentBet,
+            numOfRaise,
+            playerIndex,
+            round,
+            deck
+    )
 
     private fun loadSavedState(): SavedState =
         try {
-            restoreSnapshot()
+            restoreSnapshot(localData, history)
         } catch(_: Exception) {
             log("Local data is broken. Game was restarted")
             localData.resetGame()
-            restoreSnapshot()
+            restoreSnapshot(localData, history)
         }
 
     private fun player(index: Int) = _state.value.players[index]
@@ -551,18 +457,3 @@ class MainViewModel @Inject constructor(
         _events.emit(UiEvent.ShowToast(mess))
     }
 }
-
-enum class RoundType {
-    PRE_DRAW,
-    DRAW,
-    POST_DRAW
-}
-
-class SavedState(
-    val screenState: ScreenState,
-    val currentBet: Int,
-    val numOfRaise: Int,
-    val playerIndex: Int,
-    val round: RoundType,
-    val deck: List<Card>,
-)
