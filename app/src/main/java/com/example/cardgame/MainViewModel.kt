@@ -423,17 +423,17 @@ class MainViewModel @Inject constructor(
         _state.update { it.updatePlayer(index) { copy(lastDraw = newAction) } }
     }
 
-    private fun saveState() =
-        saveSnapshot(
-            localData,
-            history,
+    private fun saveState() {
+        val savedState = SavedState(
             state.value,
             currentBet,
             numOfRaise,
             playerIndex,
             round,
             deck
-    )
+        )
+        saveSnapshot(localData, history, savedState)
+    }
 
     private fun loadSavedState(): SavedState =
         try {

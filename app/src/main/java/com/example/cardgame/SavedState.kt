@@ -12,14 +12,9 @@ class SavedState(
 fun saveSnapshot(
     localData: LocalDataRepository,
     history: History,
-    screenState: ScreenState,
-    currentBet: Int,
-    numOfRaise: Int,
-    playerIndex: Int,
-    round: RoundType,
-    deck: List<Card>
+    savedState: SavedState
 ) {
-    val players = screenState.players
+    val players = savedState.screenState.players
     with (localData) {
         player0Name = players[0].name
         player0Cards = Card.serializeList(players[0].cards)
@@ -49,15 +44,15 @@ fun saveSnapshot(
         player3LastDraw = players[3].lastDraw.serialize()
         player3LastBet = players[3].lastBet.serialize()
 
-        bankChips = screenState.bankChips
-        isResetAvailable = screenState.isResetAvailable
+        bankChips = savedState.screenState.bankChips
+        isResetAvailable = savedState.screenState.isResetAvailable
+        currentBet = savedState.currentBet
+        numOfRaise = savedState.numOfRaise
+        playerIndex = savedState.playerIndex
+        round = savedState.round.ordinal
+        deck = Card.serializeList(savedState.deck)
+        localData.history = history.serialize()
     }
-    localData.currentBet = currentBet
-    localData.numOfRaise = numOfRaise
-    localData.playerIndex = playerIndex
-    localData.round = round.ordinal
-    localData.deck = Card.serializeList(deck)
-    localData.history = history.serialize()
 }
 
 fun restoreSnapshot(
