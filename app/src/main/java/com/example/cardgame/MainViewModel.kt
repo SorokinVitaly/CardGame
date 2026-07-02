@@ -190,14 +190,10 @@ class MainViewModel @Inject constructor(
                 }
             }
 
-            val prevPlayerIndex = playerIndex
             playerIndex = nextPlayerIndex(playerIndex) { isInGame }
-            log("$prevPlayerIndex -> $playerIndex")
-
             val availableActions = availableActions(playerIndex)
             if (playerIndex == 0) {
                 if (round == RoundType.DRAW) {
-                    log("player0 Draw")
                     _state.update { it.copy(isDrawEnabled = true) }
                     _events.emit(UiEvent.ShowToast("Please choose cards to draw"))
                 }
