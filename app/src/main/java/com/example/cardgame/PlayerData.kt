@@ -6,7 +6,7 @@ data class PlayerData(
     val selectedCards: Set<Card> = emptySet(),
     val chips: Int,
     val isActive: Boolean,
-    val isDialer: Boolean,
+    val isDealer: Boolean,
     val lastDraw: ActionType = ActionType.NoAction(),
     val lastBet: ActionType = ActionType.NoAction()
 ) {

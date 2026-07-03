@@ -67,7 +67,7 @@ fun restoreSnapshot(
             cards = Card.unserializeList(player0Cards),
             chips = player0Chips,
             isActive = player0IsActive,
-            isDialer = dealerIndex == 0,
+            isDealer = dealerIndex == 0,
             lastDraw = ActionType.unserialize(player0LastDraw),
             lastBet = ActionType.unserialize(player0LastBet)
         )
@@ -76,7 +76,7 @@ fun restoreSnapshot(
             cards = Card.unserializeList(player1Cards),
             chips = player1Chips,
             isActive = player1IsActive,
-            isDialer = dealerIndex == 1,
+            isDealer = dealerIndex == 1,
             lastDraw = ActionType.unserialize(player1LastDraw),
             lastBet = ActionType.unserialize(player1LastBet)
         )
@@ -85,7 +85,7 @@ fun restoreSnapshot(
             cards = Card.unserializeList(player2Cards),
             chips = player2Chips,
             isActive = player2IsActive,
-            isDialer = dealerIndex == 2,
+            isDealer = dealerIndex == 2,
             lastDraw = ActionType.unserialize(player2LastDraw),
             lastBet = ActionType.unserialize(player2LastBet)
         )
@@ -94,7 +94,7 @@ fun restoreSnapshot(
             cards = Card.unserializeList(player3Cards),
             chips = player3Chips,
             isActive = player3IsActive,
-            isDialer = dealerIndex == 3,
+            isDealer = dealerIndex == 3,
             lastDraw = ActionType.unserialize(player3LastDraw),
             lastBet = ActionType.unserialize(player3LastBet)
         )

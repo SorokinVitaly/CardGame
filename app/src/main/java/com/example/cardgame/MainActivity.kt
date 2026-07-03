@@ -129,7 +129,7 @@ class MainActivity : ComponentActivity() {
                 }
             } else {
                 if (state.isDealAvailable) {
-                    AppButton("Deal next", viewModel::onDialNext)
+                    AppButton("Deal next", viewModel::onDealNext)
                 }
                 if (state.isResetAvailable) {
                     AppButton("Reset game", viewModel::onResetGame)

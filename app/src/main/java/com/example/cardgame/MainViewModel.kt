@@ -59,7 +59,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun onDialNext() {
+    fun onDealNext() {
         viewModelScope.launch {
             localData.isResetAvailable = true
             localData.isGameStarted = true
@@ -77,7 +77,7 @@ class MainViewModel @Inject constructor(
             saveState()
             dealingCards()
             preCalculatePreDraw()
-            payAnte()
+            payBlinds()
             mainGameLoop()
         }
     }
@@ -119,7 +119,7 @@ class MainViewModel @Inject constructor(
                         cards = emptyList(),
                         lastDraw = ActionType.NoAction(),
                         lastBet = ActionType.NoAction(),
-                        isDialer = i == localData.dealerIndex
+                        isDealer = i == localData.dealerIndex
                     )
                 }
             )
@@ -163,11 +163,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private suspend fun payAnte() {
-        forEachActivePlayer { index ->
-            delay(300L)
-            _state.update { it.payToBank(index, ANTE_BET) }
-        }
+    private suspend fun payBlinds() {
+        delay(300L)
+        playerIndex = nextPlayerIndex(playerIndex) { isActive }
+        applyAction(playerIndex, ActionType.SmallBlind())
+        delay(300L)
+        playerIndex = nextPlayerIndex(playerIndex) { isActive }
+        applyAction(playerIndex, ActionType.BigBlind())
     }
 
     private suspend fun mainGameLoop() {
@@ -180,7 +182,12 @@ class MainViewModel @Inject constructor(
             }
 
             val endRound = if (round != RoundType.DRAW) {
-                inGamePlayers.all { it.lastBet !is ActionType.NoAction && it.lastBet.paid == currentBet }
+                inGamePlayers.all {
+                    it.lastBet.paid == currentBet &&
+                            it.lastBet !is ActionType.NoAction &&
+                            it.lastBet !is ActionType.SmallBlind &&
+                            it.lastBet !is ActionType.BigBlind
+                }
             } else {
                 inGamePlayers.all { it.lastDraw is ActionType.Draw }
             }
@@ -294,15 +301,22 @@ class MainViewModel @Inject constructor(
     }
 
     private fun gameOver() {
+        val isPlayerActive = state.value.players.map { it.chips >= BIG_BLIND }
+        val isDealAvailable = isPlayerActive[0] && isPlayerActive.count { it } > 1
+        _state.update {
+            it.copy(
+                actionsAvailable = emptyList(),
+                isDrawEnabled = false,
+                isActionAvailable = true,
+                isDealAvailable = isDealAvailable,
+                isResetAvailable = true,
+                players = it.players.mapIndexed { i, player ->
+                    player.copy(isActive = isPlayerActive[i])
+                }
+            )
+        }
         localData.dealerIndex = nextPlayerIndex(localData.dealerIndex) { isActive }
         localData.isGameStarted = false
-        _state.update { it.copy(
-            actionsAvailable = emptyList(),
-            isDrawEnabled = false,
-            isActionAvailable = true,
-            isDealAvailable = true,
-            isResetAvailable = true
-        ) }
         saveState()
     }
 
@@ -326,7 +340,7 @@ class MainViewModel @Inject constructor(
             return listOf(ActionType.Draw())
         }
         val chips = player(playerIndex).chips
-        val roundBet = if (round == RoundType.PRE_DRAW) PRE_DRAW_BET else POST_DRAW_BET
+        val roundBet = if (round == RoundType.PRE_DRAW) SMALL_BET else BIG_BET
         val bets = ArrayList<ActionType>()
 
         if (currentBet == 0) {

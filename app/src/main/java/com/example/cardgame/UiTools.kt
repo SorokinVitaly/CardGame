@@ -76,7 +76,7 @@ fun Player(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (playerData.isDialer) {
+            if (playerData.isDealer) {
                 DealerButton()
             }
             ChipIcon()

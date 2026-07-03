@@ -5,6 +5,17 @@ sealed class ActionType(
     val payNow: Int = 0,
     val paid: Int = 0
 ) {
+    class SmallBlind() : ActionType(
+        name = "Small Blind",
+        payNow = SMALL_BLIND,
+        paid = SMALL_BLIND
+    )
+    class BigBlind() : ActionType(
+        name = "Big Blind",
+        payNow = BIG_BLIND,
+        paid = BIG_BLIND
+    )
+
     class Check(currentBet: Int = 0) : ActionType(name = "Check", paid = currentBet)
     class Bet(bet: Int) : ActionType(name = "Bet $bet",payNow = bet, paid = bet)
 
@@ -46,6 +57,8 @@ sealed class ActionType(
                 name == "Fold" -> Fold()
                 name == "Check" -> Check(paid)
                 name == "Draw" -> Draw(payNow)
+                name.startsWith("Small") -> SmallBlind()
+                name.startsWith("Big") -> BigBlind()
                 name.startsWith("Bet") -> Bet(paid)
                 name.startsWith("Call") -> Call(paid,paid - payNow)
                 name.startsWith("Raise") -> Raise(paid,paid - payNow)
