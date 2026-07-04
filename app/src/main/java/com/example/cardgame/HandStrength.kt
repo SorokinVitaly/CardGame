@@ -10,25 +10,23 @@ enum class HandStrength {
 
 fun calcHandStrength(combination: DrawCombination, isPreDraw: Boolean): HandStrength {
     val rank = combination.onHandCombination.highRank
-    val isIncomplete = combination.incompleteCombination != IncompleteCombinationType.NO_INCOMPLETE
-    return when (combination.onHandCombination.type) {
-        CombinationType.ROYAL_FLUSH,
-        CombinationType.STRAIGHT_FLUSH,
-        CombinationType.FOUR_OF_A_KIND -> HandStrength.MONSTER
-
-        CombinationType.FULL_HOUSE,
-        CombinationType.FLUSH,
-        CombinationType.STRAIGHT,
-        CombinationType.THREE_OF_A_KIND -> HandStrength.STRONG
-
-        CombinationType.TWO_PAIRS -> if (rank >= CardRank.TEN) HandStrength.STRONG else HandStrength.MEDIUM
-
-        CombinationType.PAIR -> when {
-            rank >= CardRank.JACK -> HandStrength.MEDIUM
-            rank >= CardRank.EIGHT && isPreDraw -> HandStrength.DRAWING
-            else -> HandStrength.WEAK
+    val combinationType = combination.onHandCombination.type
+    when {
+        combinationType >= CombinationType.FOUR_OF_A_KIND -> return HandStrength.MONSTER
+        combinationType >= CombinationType.THREE_OF_A_KIND -> return HandStrength.STRONG
+        combinationType == CombinationType.TWO_PAIRS -> return if (rank >= CardRank.TEN) {
+            HandStrength.STRONG
+        } else {
+            HandStrength.MEDIUM
         }
-
-        CombinationType.HIGH_CARD -> if (isIncomplete) HandStrength.DRAWING else HandStrength.WEAK
+        combinationType == CombinationType.PAIR -> when {
+            rank >= CardRank.JACK -> return HandStrength.MEDIUM
+            rank >= CardRank.EIGHT && isPreDraw -> return HandStrength.DRAWING
+        }
+    }
+    return if (combination.incompleteCombination != IncompleteCombinationType.NO_INCOMPLETE) {
+        HandStrength.DRAWING
+    } else {
+        HandStrength.WEAK
     }
 }

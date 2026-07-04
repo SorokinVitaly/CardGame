@@ -1,5 +1,7 @@
 package com.example.cardgame
 
+import kotlin.random.Random
+
 enum class BettingStrategy {
     DROP,
     PASSIVE,
@@ -10,37 +12,35 @@ fun selectBotStrategy(
     strength: HandStrength,
     numOfRaise: Int,
     isLatePosition: Boolean,
-    drawIsWorthIt: Boolean,
     isFacingBet: Boolean,
-    isPreDraw: Boolean
+    isPreDraw: Boolean,
+    drawOdds: Float
 ): BettingStrategy {
+    val random = Random.nextFloat()
     return when (strength) {
         HandStrength.MONSTER -> BettingStrategy.AGGRESSIVE
 
-        HandStrength.STRONG -> when {
-            !isFacingBet && isLatePosition -> BettingStrategy.AGGRESSIVE
-            !isFacingBet                   -> BettingStrategy.PASSIVE
-            isFacingBet && numOfRaise == 0 -> BettingStrategy.AGGRESSIVE
-            else                           -> BettingStrategy.PASSIVE
-        }
+        HandStrength.STRONG -> if (numOfRaise == 0 || !isFacingBet) BettingStrategy.AGGRESSIVE else BettingStrategy.PASSIVE
 
         HandStrength.MEDIUM -> when {
-            !isFacingBet                                 -> BettingStrategy.PASSIVE
-            isFacingBet && numOfRaise == 0               -> BettingStrategy.PASSIVE
-            isFacingBet && numOfRaise == 1 && !isPreDraw -> BettingStrategy.PASSIVE
-            else                                         -> BettingStrategy.DROP
+            !isFacingBet && isLatePosition  -> BettingStrategy.AGGRESSIVE
+            !isFacingBet || numOfRaise <= 1 -> BettingStrategy.PASSIVE
+            else                            -> BettingStrategy.DROP
         }
 
         HandStrength.DRAWING -> when {
-            !isFacingBet                                                  -> BettingStrategy.PASSIVE
-            isFacingBet && drawIsWorthIt && numOfRaise == 0               -> BettingStrategy.PASSIVE
-            isFacingBet && drawIsWorthIt && numOfRaise == 1 && !isPreDraw -> BettingStrategy.PASSIVE
-            else                                                          -> BettingStrategy.DROP
+            !isFacingBet                                            -> BettingStrategy.PASSIVE
+            random < drawOdds * DRAW_RISK_FACTOR && numOfRaise <= 1 -> BettingStrategy.PASSIVE
+            else                                                    -> BettingStrategy.DROP
         }
 
-        HandStrength.WEAK -> if (isFacingBet) BettingStrategy.DROP else {
-            if (isLatePosition && numOfRaise == 0 && isPreDraw) BettingStrategy.AGGRESSIVE
-            else BettingStrategy.PASSIVE
+        HandStrength.WEAK -> when {
+            random < BLUFF_ODD &&
+                    isLatePosition &&
+                    isPreDraw &&
+                    numOfRaise == 0 -> BettingStrategy.AGGRESSIVE
+            !isFacingBet            -> BettingStrategy.PASSIVE
+            else                    -> BettingStrategy.DROP
         }
     }
 }

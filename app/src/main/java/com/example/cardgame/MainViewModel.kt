@@ -378,20 +378,15 @@ class MainViewModel @Inject constructor(
             val playerCount = _state.value.players.count { it.isActive }
             val positionFromDealer = (index - localData.dealerIndex - 1 + playerCount) % playerCount
             val isLatePosition = positionFromDealer >= 2
-            val isFacingBet = currentBet > 0
-
-            val potOdds: Float = currentBet.toFloat() / (_state.value.bankChips + currentBet).toFloat()
-            val drawProbability = if (isPreDraw) drawOdds[combination.incompleteCombination] else 0f
-            requireNotNull(drawProbability)
-            val drawIsWorthIt = drawProbability > 0f && potOdds <= drawProbability
-
+            val isFacingBet = currentBet > player(index).lastBet.paid
+            val drawOdds = drawOdds[combination.incompleteCombination] ?: 0f
             val strategy = selectBotStrategy(
                 strength,
                 numOfRaise,
                 isLatePosition,
-                drawIsWorthIt,
                 isFacingBet,
-                isPreDraw
+                isPreDraw,
+                drawOdds
             )
             resolveAction(strategy, availableActions)
         }
