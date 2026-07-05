@@ -384,15 +384,14 @@ class MainViewModel @Inject constructor(
             val playerCount = _state.value.players.count { it.isActive }
             val positionFromDealer = (index - localData.dealerIndex - 1 + playerCount) % playerCount
             val isLatePosition = positionFromDealer >= 2
-            val isFacingBet = currentBet > player(index).lastBet.paid
-            val drawOdds = drawOdds[combination.incompleteCombination] ?: 0f
+            val payToCall = currentBet - player(index).lastBet.paid
             val strategy = selectBotStrategy(
                 strength,
+                payToCall,
                 numOfRaise,
                 isLatePosition,
-                isFacingBet,
                 isPreDraw,
-                drawOdds
+                combination.incompleteCombination
             )
             resolveAction(strategy, availableActions)
         }

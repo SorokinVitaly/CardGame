@@ -10,38 +10,36 @@ enum class BettingStrategy {
 
 fun selectBotStrategy(
     strength: HandStrength,
+    payToCall: Int,
     numOfRaise: Int,
     isLatePosition: Boolean,
-    isFacingBet: Boolean,
     isPreDraw: Boolean,
-    drawOdds: Float
+    incomplete: IncompleteCombinationType
 ): BettingStrategy {
+    val betSize = if (isPreDraw) SMALL_BET else BIG_BET
     val random = Random.nextFloat()
     return when (strength) {
         HandStrength.MONSTER -> BettingStrategy.AGGRESSIVE
 
-        HandStrength.STRONG -> if (numOfRaise == 0 || !isFacingBet) BettingStrategy.AGGRESSIVE else BettingStrategy.PASSIVE
+        HandStrength.STRONG -> if (numOfRaise == 0 || payToCall == 0) BettingStrategy.AGGRESSIVE else BettingStrategy.PASSIVE
 
         HandStrength.MEDIUM -> when {
-            !isFacingBet && isLatePosition  -> BettingStrategy.AGGRESSIVE
-            !isFacingBet || numOfRaise <= 1 -> BettingStrategy.PASSIVE
-            else                            -> BettingStrategy.DROP
+                payToCall <= betSize ->    BettingStrategy.PASSIVE
+                numOfRaise >= 2 ->         BettingStrategy.DROP
+                payToCall > betSize * 2 -> BettingStrategy.DROP
+                else ->                    BettingStrategy.PASSIVE
+            }
+
+        HandStrength.DRAWING -> {
+            val limitToPay = if (incomplete >= IncompleteCombinationType.THREE_TO_STRAIGHT_FLUSH) betSize * 2 else betSize
+            if (payToCall <= limitToPay) BettingStrategy.PASSIVE else BettingStrategy.DROP
         }
 
-        HandStrength.DRAWING -> when {
-            !isFacingBet                                            -> BettingStrategy.PASSIVE
-            random < drawOdds * DRAW_RISK_FACTOR && numOfRaise <= 1 -> BettingStrategy.PASSIVE
-            else                                                    -> BettingStrategy.DROP
-        }
-
-        HandStrength.WEAK -> when {
-            random < BLUFF_ODD &&
-                    isLatePosition &&
-                    isPreDraw &&
-                    numOfRaise == 0 -> BettingStrategy.AGGRESSIVE
-            !isFacingBet            -> BettingStrategy.PASSIVE
-            else                    -> BettingStrategy.DROP
-        }
+        HandStrength.WEAK -> if (random < BLUFF_ODD &&
+            isLatePosition &&
+            isPreDraw &&
+            numOfRaise == 0
+        ) BettingStrategy.AGGRESSIVE else BettingStrategy.DROP
     }
 }
 

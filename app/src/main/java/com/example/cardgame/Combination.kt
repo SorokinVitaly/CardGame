@@ -15,19 +15,12 @@ enum class CombinationType {
 
 enum class IncompleteCombinationType {
     NO_INCOMPLETE,
-    THREE_TO_STRAIGHT_FLUSH,
     FOUR_TO_STRAIGHT,
     FOUR_TO_STRAIGHT_OPEN,
-    FOUR_TO_FLUSH
+    FOUR_TO_FLUSH,
+    THREE_TO_STRAIGHT_FLUSH,
+    FOUR_TO_STRAIGHT_FLUSH,
 }
-
-val drawOdds = mapOf(
-    IncompleteCombinationType.FOUR_TO_FLUSH to 0.19f,
-    IncompleteCombinationType.FOUR_TO_STRAIGHT_OPEN to 0.17f,
-    IncompleteCombinationType.FOUR_TO_STRAIGHT to 0.09f,
-    IncompleteCombinationType.THREE_TO_STRAIGHT_FLUSH to 0.12f,
-    IncompleteCombinationType.NO_INCOMPLETE to 0f
-)
 
 data class Kickers(val list: List<CardRank> = emptyList()) : Comparable<Kickers> {
     override fun compareTo(other: Kickers): Int {
