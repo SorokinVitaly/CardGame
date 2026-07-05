@@ -339,11 +339,13 @@ class MainViewModel @Inject constructor(
         if (round == RoundType.DRAW) {
             return listOf(ActionType.Draw())
         }
-        val chips = player(playerIndex).chips
-        val roundBet = if (round == RoundType.PRE_DRAW) SMALL_BET else BIG_BET
-        val prevPaid = player(playerIndex).lastBet.paid
+        val betSize = if (round == RoundType.PRE_DRAW) SMALL_BET else BIG_BET
+        val player = player(playerIndex)
+        val chips = player.chips
+        val prevPaid = player.lastBet.paid
         val payToCall = currentBet - prevPaid
         val bets = ArrayList<ActionType>()
+
         if (payToCall == 0) {
             bets.add(ActionType.Check(currentBet))
         } else {
@@ -351,16 +353,18 @@ class MainViewModel @Inject constructor(
                 bets.add(ActionType.Call(currentBet, prevPaid))
             }
         }
+
         if (currentBet == 0) {
-            if (chips >= roundBet) {
-                bets.add(ActionType.Bet(roundBet))
+            if (chips >= betSize) {
+                bets.add(ActionType.Bet(betSize))
             }
         } else {
-            val raiseTo = currentBet + roundBet
+            val raiseTo = currentBet + betSize
             if (chips >= raiseTo - prevPaid && numOfRaise < MAX_NUM_OF_RAISE) {
                 bets.add(ActionType.Raise(raiseTo, prevPaid))
             }
         }
+
         bets.add(ActionType.Fold())
         return bets
     }
