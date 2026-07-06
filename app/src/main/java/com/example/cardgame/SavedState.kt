@@ -98,14 +98,16 @@ fun restoreSnapshot(
             lastDraw = ActionType.unserialize(player3LastDraw),
             lastBet = ActionType.unserialize(player3LastBet)
         )
+        val players = listOf(player0, player1, player2, player3)
+        val isDealAvailable = player0.isActive && players.count { it.isActive } > 1
         ScreenState(
-            players = listOf(player0, player1, player2, player3),
+            players = players,
             actionsAvailable = emptyList(),
             bankChips = bankChips,
             isDrawEnabled = false,
             isActionAvailable = true,
-            isDealAvailable = true,
-            isResetAvailable = isResetAvailable,
+            isDealAvailable = isDealAvailable,
+            isResetAvailable = isResetAvailable || !isDealAvailable,
             isCardsOpen = false
         )
     }
