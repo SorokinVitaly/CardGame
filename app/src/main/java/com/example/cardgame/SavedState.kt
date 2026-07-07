@@ -99,7 +99,7 @@ fun restoreSnapshot(
             lastBet = ActionType.unserialize(player3LastBet)
         )
         val players = listOf(player0, player1, player2, player3)
-        val isDealAvailable = player0.isActive && players.count { it.isActive } > 1
+        val isDealAvailable = player0.isActive && players.count { it.isActive } > 2
         ScreenState(
             players = players,
             actionsAvailable = emptyList(),
