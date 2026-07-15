@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.ChainStyle
 import androidx.constraintlayout.compose.ConstrainScope
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,13 +79,33 @@ class MainActivity : ComponentActivity() {
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    val biasShift =
-                        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 0f else 0.15f
-
                     Bank(
                         bankChips = state.bankChips,
                         modifier = Modifier.constrainAs(createRef()) { centerTo(parent) }
                     )
+
+                    val refs = state.players.indices.map { createRef() }
+                    val portrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+                    if (portrait) {
+                        createVerticalChain(
+                            refs[2], refs[1],
+                            chainStyle = ChainStyle.Packed(bias = 0.45f)
+                        )
+                        createVerticalChain(
+                            refs[4], refs[5],
+                            chainStyle = ChainStyle.Packed(bias = 0.45f)
+                        )
+                    } else {
+                        createHorizontalChain(
+                            refs[1], horizontalSpacer(), refs[0],
+                            chainStyle = ChainStyle.Packed
+                        )
+                        createHorizontalChain(
+                            refs[3], horizontalSpacer(), refs[4],
+                            chainStyle = ChainStyle.Packed
+                        )
+                    }
+
                     state.players.forEachIndexed { index, player ->
                         val isCardsOpen = when {
                             index == 0 -> true
@@ -101,8 +122,8 @@ class MainActivity : ComponentActivity() {
                             isCardsOpen = isCardsOpen,
                             onCardClick = ::onCardClick,
                             modifier = Modifier.constrainAs(
-                                createRef(),
-                                playerConstraint(index, biasShift)
+                                refs[index],
+                                playerConstraint(index, portrait)
                             )
                         )
                     }
@@ -143,31 +164,44 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun playerConstraint(index: Int, biasShift: Float): ConstrainScope.() -> Unit = {
-        when (index) {
-            0 -> {
-                centerHorizontallyTo(parent)
-                bottom.linkTo(parent.bottom, margin = 5.dp)
-                horizontalBias = 0.5f + biasShift
+    private fun playerConstraint(index: Int, portrait: Boolean): ConstrainScope.() -> Unit = {
+        val margin = 2.dp
+        if (portrait) {
+            when (index) {
+                0 -> {
+                    centerHorizontallyTo(parent)
+                    bottom.linkTo(parent.bottom, margin = margin)
+                }
+                1, 2 -> {
+                    absoluteLeft.linkTo(parent.absoluteLeft, margin = margin)
+                }
+                3 -> {
+                    centerHorizontallyTo(parent)
+                    top.linkTo(parent.top, margin = margin)
+                }
+                4, 5 -> {
+                    absoluteRight.linkTo(parent.absoluteRight, margin = margin)
+                }
+                else -> throw IllegalArgumentException("Invalid player index: $index")
             }
-
-            1 -> {
-                centerVerticallyTo(parent)
-                absoluteLeft.linkTo(parent.absoluteLeft, margin = 5.dp)
+        } else {
+            when (index) {
+                0, 1 -> {
+                    bottom.linkTo(parent.bottom, margin = margin)
+                }
+                2 -> {
+                    centerVerticallyTo(parent)
+                    absoluteLeft.linkTo(parent.absoluteLeft, margin = margin)
+                }
+                3, 4 -> {
+                    top.linkTo(parent.top, margin = margin)
+                }
+                5 -> {
+                    centerVerticallyTo(parent)
+                    absoluteRight.linkTo(parent.absoluteRight, margin = margin)
+                }
+                else -> throw IllegalArgumentException("Invalid player index: $index")
             }
-
-            2 -> {
-                centerHorizontallyTo(parent)
-                top.linkTo(parent.top, margin = 5.dp)
-                horizontalBias = 0.5f - biasShift
-            }
-
-            3 -> {
-                centerVerticallyTo(parent)
-                absoluteRight.linkTo(parent.absoluteRight, margin = 5.dp)
-            }
-
-            else -> throw IllegalArgumentException("Invalid player index: $index")
         }
     }
 }

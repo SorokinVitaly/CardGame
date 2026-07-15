@@ -34,8 +34,23 @@ interface LocalDataRepository {
     var player3LastDraw: String
     var player3LastBet: String
 
+    var player4Name: String
+    var player4Cards: String
+    var player4Chips: Int
+    var player4IsActive: Boolean
+    var player4LastDraw: String
+    var player4LastBet: String
+
+    var player5Name: String
+    var player5Cards: String
+    var player5Chips: Int
+    var player5IsActive: Boolean
+    var player5LastDraw: String
+    var player5LastBet: String
+
     var history: String
     var deck: String
+    var discarded: String
     var bankChips: Int
     var dealerIndex: Int
     var isGameStarted: Boolean
@@ -152,6 +167,56 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
         ""
     )
 
+    override var player4Name: String by PreferencesDelegate(
+        ::player4Name.name,
+        DEFAULT_PLAYER_4_NAME
+    )
+    override var player4Cards: String by PreferencesDelegate(
+        ::player4Cards.name,
+        ""
+    )
+    override var player4Chips: Int by PreferencesDelegate(
+        ::player4Chips.name,
+        DEFAULT_CHIP_NUMBER
+    )
+    override var player4IsActive: Boolean by PreferencesDelegate(
+        ::player4IsActive.name,
+        true
+    )
+    override var player4LastDraw: String by PreferencesDelegate(
+        ::player4LastDraw.name,
+        ""
+    )
+    override var player4LastBet: String by PreferencesDelegate(
+        ::player4LastBet.name,
+        ""
+    )
+
+    override var player5Name: String by PreferencesDelegate(
+        ::player5Name.name,
+        DEFAULT_PLAYER_5_NAME
+    )
+    override var player5Cards: String by PreferencesDelegate(
+        ::player5Cards.name,
+        ""
+    )
+    override var player5Chips: Int by PreferencesDelegate(
+        ::player5Chips.name,
+        DEFAULT_CHIP_NUMBER
+    )
+    override var player5IsActive: Boolean by PreferencesDelegate(
+        ::player5IsActive.name,
+        true
+    )
+    override var player5LastDraw: String by PreferencesDelegate(
+        ::player5LastDraw.name,
+        ""
+    )
+    override var player5LastBet: String by PreferencesDelegate(
+        ::player5LastBet.name,
+        ""
+    )
+
     override var history: String by PreferencesDelegate(
         ::history.name,
         ""
@@ -160,13 +225,17 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
         ::deck.name,
         ""
     )
+    override var discarded: String by PreferencesDelegate(
+        ::discarded.name,
+        ""
+    )
     override var bankChips: Int by PreferencesDelegate(
         ::bankChips.name,
         0
     )
     override var dealerIndex: Int by PreferencesDelegate(
         ::dealerIndex.name,
-        Random.nextInt(4)
+        Random.nextInt(PLAYERS_NUMBER)
     )
     override var isGameStarted: Boolean by PreferencesDelegate(
         ::isGameStarted.name,
@@ -198,26 +267,42 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
         player1Cards = ""
         player2Cards = ""
         player3Cards = ""
+        player4Cards = ""
+        player5Cards = ""
 
         player0Chips = DEFAULT_CHIP_NUMBER
         player1Chips = DEFAULT_CHIP_NUMBER
         player2Chips = DEFAULT_CHIP_NUMBER
         player3Chips = DEFAULT_CHIP_NUMBER
+        player4Chips = DEFAULT_CHIP_NUMBER
+        player5Chips = DEFAULT_CHIP_NUMBER
 
         player0IsActive = true
         player1IsActive = true
         player2IsActive = true
         player3IsActive = true
+        player4IsActive = true
+        player5IsActive = true
+
+        player0LastDraw = ""
+        player1LastDraw = ""
+        player2LastDraw = ""
+        player3LastDraw = ""
+        player4LastDraw = ""
+        player5LastDraw = ""
 
         player0LastBet = ""
         player1LastBet = ""
         player2LastBet = ""
         player3LastBet = ""
+        player4LastBet = ""
+        player5LastBet = ""
 
         history = ""
         deck = ""
+        discarded = ""
         bankChips = 0
-        dealerIndex = Random.nextInt(4)
+        dealerIndex = Random.nextInt(PLAYERS_NUMBER)
         isGameStarted = false
         isResetAvailable = false
         currentBet = 0
@@ -228,9 +313,11 @@ class LocalDataRepositoryImpl @Inject constructor(override val prefs: SharedPref
 
     companion object {
         const val DEFAULT_PLAYER_0_NAME = "Me"
-        const val DEFAULT_PLAYER_1_NAME = "Lesley Colon"
-        const val DEFAULT_PLAYER_2_NAME = "Leon Kim"
-        const val DEFAULT_PLAYER_3_NAME = "Vanessa May"
+        const val DEFAULT_PLAYER_1_NAME = "Lesley"
+        const val DEFAULT_PLAYER_2_NAME = "Leon"
+        const val DEFAULT_PLAYER_3_NAME = "Vanessa"
+        const val DEFAULT_PLAYER_4_NAME = "Omer"
+        const val DEFAULT_PLAYER_5_NAME = "Yolanda"
         const val DEFAULT_CHIP_NUMBER = 1000
     }
 }

@@ -7,6 +7,7 @@ class SavedState(
     val playerIndex: Int,
     val round: RoundType,
     val deck: List<Card>,
+    val discarded: List<Card>,
 )
 
 fun saveSnapshot(
@@ -44,6 +45,20 @@ fun saveSnapshot(
         player3LastDraw = players[3].lastDraw.serialize()
         player3LastBet = players[3].lastBet.serialize()
 
+        player4Name = players[4].name
+        player4Cards = Card.serializeList(players[4].cards)
+        player4Chips = players[4].chips
+        player4IsActive = players[4].isActive
+        player4LastDraw = players[4].lastDraw.serialize()
+        player4LastBet = players[4].lastBet.serialize()
+
+        player5Name = players[5].name
+        player5Cards = Card.serializeList(players[5].cards)
+        player5Chips = players[5].chips
+        player5IsActive = players[5].isActive
+        player5LastDraw = players[5].lastDraw.serialize()
+        player5LastBet = players[5].lastBet.serialize()
+
         bankChips = savedState.screenState.bankChips
         isResetAvailable = savedState.screenState.isResetAvailable
         currentBet = savedState.currentBet
@@ -51,6 +66,7 @@ fun saveSnapshot(
         playerIndex = savedState.playerIndex
         round = savedState.round.ordinal
         deck = Card.serializeList(savedState.deck)
+        discarded = Card.serializeList(savedState.discarded)
         localData.history = history.serialize()
     }
 }
@@ -98,7 +114,25 @@ fun restoreSnapshot(
             lastDraw = ActionType.unserialize(player3LastDraw),
             lastBet = ActionType.unserialize(player3LastBet)
         )
-        val players = listOf(player0, player1, player2, player3)
+        val player4 = PlayerData(
+            name = player4Name,
+            cards = Card.unserializeList(player4Cards),
+            chips = player4Chips,
+            isActive = player4IsActive,
+            isDealer = dealerIndex == 4,
+            lastDraw = ActionType.unserialize(player4LastDraw),
+            lastBet = ActionType.unserialize(player4LastBet)
+        )
+        val player5 = PlayerData(
+            name = player5Name,
+            cards = Card.unserializeList(player5Cards),
+            chips = player5Chips,
+            isActive = player5IsActive,
+            isDealer = dealerIndex == 5,
+            lastDraw = ActionType.unserialize(player5LastDraw),
+            lastBet = ActionType.unserialize(player5LastBet)
+        )
+        val players = listOf(player0, player1, player2, player3, player4, player5)
         val isDealAvailable = player0.isActive && players.count { it.isActive } > 2
         ScreenState(
             players = players,
@@ -118,6 +152,7 @@ fun restoreSnapshot(
         numOfRaise = localData.numOfRaise,
         playerIndex = localData.playerIndex,
         round = RoundType.entries[localData.round],
-        deck = Card.unserializeList(localData.deck)
+        deck = Card.unserializeList(localData.deck),
+        discarded = Card.unserializeList(localData.discarded)
     )
 }

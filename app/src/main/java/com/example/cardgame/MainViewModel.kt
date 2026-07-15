@@ -27,11 +27,12 @@ class MainViewModel @Inject constructor(
     val events = _events.asSharedFlow()
 
     private val deck = savedState.deck.toMutableList()
+    private val discarded = savedState.discarded.toMutableList()
     private var currentBet = savedState.currentBet
     private var numOfRaise = savedState.numOfRaise
     private var playerIndex = savedState.playerIndex
     private var round = savedState.round
-    private val combinations = arrayOfNulls<DrawCombination?>(4)
+    private val combinations = arrayOfNulls<DrawCombination?>(PLAYERS_NUMBER)
 
     init {
         if (localData.isGameStarted &&
@@ -68,6 +69,7 @@ class MainViewModel @Inject constructor(
             playerIndex = localData.dealerIndex
             round = RoundType.PRE_DRAW
             history.clear()
+            discarded.clear()
             if (deck.size != 52) {
                 deck.clear()
                 deck.addAll(deckPoker)
@@ -127,7 +129,7 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun forEachActivePlayer(action: suspend PlayerData.(Int) -> Unit) {
-        repeat(4) { index ->
+        repeat(PLAYERS_NUMBER) { index ->
             player(index).apply {
                 if (isActive) {
                     action(index)
@@ -321,14 +323,14 @@ class MainViewModel @Inject constructor(
     }
 
     private fun nextPlayerIndex(index: Int, predicate: PlayerData.() -> Boolean): Int {
-        val first = (index + 1) and 3
+        val first = (index + 1) % PLAYERS_NUMBER
         var current = first
 
         while (true) {
             if (player(current).predicate()) {
                 return current
             }
-            current = (current + 1) and 3
+            current = (current + 1) % PLAYERS_NUMBER
             if (current == first) {
                 throw IllegalStateException("Next player not found")
             }
@@ -421,6 +423,12 @@ class MainViewModel @Inject constructor(
         val selected = _state.value.players[index].selectedCards
         val newAction = ActionType.Draw(selected.size)
         if (selected.isNotEmpty()) {
+            if (deck.size < selected.size) {
+                deck.addAll(discarded)
+                discarded.clear()
+                deck.shuffle()
+            }
+            discarded.addAll(selected)
             selected.forEach { card ->
                 _state.update { it.updatePlayer(index) { removeCard(card) } }
                 delay(300L)
@@ -444,7 +452,8 @@ class MainViewModel @Inject constructor(
             numOfRaise,
             playerIndex,
             round,
-            deck
+            deck,
+            discarded
         )
         saveSnapshot(localData, history, savedState)
     }
