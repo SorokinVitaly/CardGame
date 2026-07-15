@@ -1,11 +1,11 @@
 # CardGame
 Five-Card Draw Poker
-Starting Bets: Ante (1 chip)
+Starting Bets: Small blind (1 chip) and Big blind (2 chips)
 
 Limited 1-Bet/3-Raise
 Bet/Raise Size
-- For Pre-Draw Round: 1 chip
-- For Post-Draw Round: 2 chips
+- For Pre-Draw Round: 2 chips
+- For Post-Draw Round: 4 chips
 
 Note:
 - Chips in the game are not associated with real money. This game is not gambling; it is for entertainment only.
