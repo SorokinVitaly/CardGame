@@ -114,11 +114,13 @@ fun Card(
     modifier: Modifier = Modifier,
 ) {
     val assetName = if (isCardsOpen) card.faceAssetName else card.backAssetName
-    val borderColor = if (isSelected) Color.Yellow else Color.Black
-    val borderWidth = if (isSelected) 2.dp else 1.dp
+    val borderStroke = if (!isCardsOpen) null else {
+        if (isSelected) BorderStroke(width = 2.dp, color = Color.Yellow)
+        else BorderStroke(width = 1.dp, color = Color.Black)
+    }
 
     Card(
-        border = BorderStroke(width = borderWidth, color = borderColor),
+        border = borderStroke,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         shape = RoundedCornerShape(4.dp),
         modifier = modifier
