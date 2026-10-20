@@ -49,10 +49,6 @@ fun Player(
     onCardClick: (Card) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (!playerData.isActive) {
-        return
-    }
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -63,22 +59,30 @@ fun Player(
             color = Color.White
         )
 
-        Box {
-            playerData.cards.forEachIndexed { index, card ->
-                val isSelected = card in playerData.selectedCards
-                Box(modifier = Modifier
-                    .padding(start = (index * 20).dp)
-                    .offset(y = if (isSelected) (-10).dp else 0.dp)
-                    .animateContentSize()
-                ) {
-                    Card(
-                        card = card,
-                        isCardsOpen = isCardsOpen,
-                        isSelected = isSelected,
-                        onClick = { onCardClick(card) }
-                    )
+        if (playerData.isActive) {
+            Box {
+                playerData.cards.forEachIndexed { index, card ->
+                    val isSelected = card in playerData.selectedCards
+                    Box(
+                        modifier = Modifier
+                            .padding(start = (index * 20).dp)
+                            .offset(y = if (isSelected) (-10).dp else 0.dp)
+                            .animateContentSize()
+                    ) {
+                        Card(
+                            card = card,
+                            isCardsOpen = isCardsOpen,
+                            isSelected = isSelected,
+                            onClick = { onCardClick(card) }
+                        )
+                    }
                 }
             }
+        } else {
+            Spacer(modifier = Modifier
+                .height(cardHeight)
+                .width(cardWidth)
+            )
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -224,7 +228,9 @@ fun Bank(
 @Composable
 fun ConstraintLayoutScope.horizontalSpacer(width: Dp = 10.dp): ConstrainedLayoutReference {
     val ref = createRef()
-    Spacer(Modifier.width(width).constrainAs(ref) {})
+    Spacer(Modifier
+        .width(width)
+        .constrainAs(ref) {})
     return ref
 }
 
